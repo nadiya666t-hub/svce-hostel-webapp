@@ -1,0 +1,569 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../server/node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ENUMS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+enum Role {
+  STUDENT
+  WARDEN
+  OVERSEER
+  WATCHMAN
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  NOT_SPECIFIED
+}
+
+enum StudentStatus {
+  ACTIVE        // currently enrolled & in hostel
+  INACTIVE      // left hostel / de-registered
+  SUSPENDED     // temporarily suspended
+  GRADUATED     // completed course
+}
+
+enum ImportSource {
+  MANUAL        // added by Admin through UI
+  CSV           // imported via CSV/Excel upload
+  API           // imported via college API integration
+  SEED          // seeded for development/testing
+}
+
+enum AllocationStatus {
+  ACTIVE        // currently occupying this room
+  VACATED       // moved out / room changed
+  CANCELLED     // allocation cancelled before occupying
+}
+
+enum RequestType {
+  GOING_HOME
+  OUTING
+  LEAVE
+  EMERGENCY_LEAVE
+  OTHER
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ProblemCategory {
+  NO_WATER
+  ELECTRICITY
+  CLEANING
+  PLUMBING
+  FURNITURE
+  WIFI
+  OTHER
+}
+
+enum ProblemStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum NoticePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum NotificationType {
+  ATTENDANCE_UPDATED
+  REQUEST_APPROVED
+  REQUEST_REJECTED
+  PROBLEM_STATUS_CHANGED
+  FEE_REMINDER
+  IMPORTANT_NOTICE
+}
+
+enum EntryExitStatus {
+  IN
+  OUT
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE_PRESENT
+  EXCUSED
+  SPECIAL
+}
+
+enum SpecialWindowStatus {
+  ACTIVE
+  USED
+  EXPIRED
+  CANCELLED
+}
+
+enum LocationVerification {
+  VERIFIED
+  UNVERIFIED
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AUTHENTICATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// One row per login account. Credentials only — no personal data here.
+model User {
+  id           String   @id @default(uuid())
+  usn          String   @unique
+  passwordHash String
+  role         Role     @default(STUDENT)
+  isActive     Boolean  @default(false)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  student Student?
+
+  @@map("users")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ACADEMIC CALENDAR
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Academic year, e.g. "2025-26"
+model AcademicYear {
+  id        String   @id @default(uuid())
+  label     String   @unique   // "2025-26"
+  startDate DateTime
+  endDate   DateTime
+  isCurrent Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  semesters      Semester[]
+  studentHistory StudentAcademicHistory[]
+  fees           Fee[]
+  notices        Notice[]
+
+  @@map("academic_years")
+}
+
+/// Individual semester within an academic year.
+/// A semester has its own start/end dates so the system can automatically
+/// determine the current semester from the calendar — no manual string updates.
+model Semester {
+  id             String   @id @default(uuid())
+  semesterNumber Int               // 1 or 2 (within the academic year)
+  label          String            // "1st Semester", "2nd Semester"
+  startDate      DateTime
+  endDate        DateTime
+  isCurrent      Boolean  @default(false)
+
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+
+  studentHistory StudentAcademicHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([academicYearId, semesterNumber])
+  @@map("semesters")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PHYSICAL STRUCTURE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model Floor {
+  id          String  @id @default(uuid())
+  floorNumber String  @unique   // "1st Floor", "2nd Floor" …
+  description String?
+  isActive    Boolean @default(true)
+
+  rooms Room[]
+
+  @@map("floors")
+}
+
+model Room {
+  id         String  @id @default(uuid())
+  roomNumber String              // "101", "105" …
+  capacity   Int     @default(1)
+  isOccupied Boolean @default(false)
+  isActive   Boolean @default(true)
+
+  floorId String
+  floor   Floor  @relation(fields: [floorId], references: [id])
+
+  /// Legacy direct FK — kept for backward compatibility.
+  /// New code should use HostelAllocation instead.
+  students    Student[]
+  allocations HostelAllocation[]
+
+  @@unique([floorId, roomNumber])
+  @@map("rooms")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STUDENT MASTER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Central student identity record — sourced from college admission data.
+/// Authentication credentials are kept in User, NOT here.
+model Student {
+  id            String        @id @default(uuid())
+  name          String
+  email         String?       @unique
+  phone         String?
+
+  // ── Academic identity (from college admission data) ───────────────────────
+  course        String?       // "B.E.", "B.Tech", "MCA" …
+  branch        String?       // "Computer Science", "Electronics" …
+  admissionYear Int?          // 2025
+  gender        Gender        @default(NOT_SPECIFIED)
+  dateOfBirth   DateTime?     @db.Date
+
+  // ── Parent / Guardian information ─────────────────────────────────────────
+  parentName    String?
+  parentPhone   String?
+  parentEmail   String?
+
+  // ── Address ────────────────────────────────────────────────────────────────
+  address       String?
+  city          String?
+  state         String?
+  pinCode       String?
+
+  // ── Health ─────────────────────────────────────────────────────────────────
+  bloodGroup    String?       // "A+", "O-" …
+  medicalNotes  String?
+
+  // ── Status & audit ────────────────────────────────────────────────────────
+  status        StudentStatus @default(ACTIVE)
+  isActive      Boolean       @default(true)
+  importSource  ImportSource  @default(MANUAL)
+  importedAt    DateTime?     // last time this record was synced from college data
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ── Relations ──────────────────────────────────────────────────────────────
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  /// Legacy direct FK — preserved so existing queries do not break.
+  /// Active room should be read via HostelAllocation.activeAllocation.
+  roomId String?
+  room   Room?  @relation(fields: [roomId], references: [id])
+
+  allocations      HostelAllocation[]
+  academicHistory  StudentAcademicHistory[]
+  attendanceRecords Attendance[]
+  requests         Request[]
+  problems         Problem[]
+  fees             Fee[]
+  notifications    Notification[]
+  entryExitRecords EntryExitRecord[]
+  specialWindows   AttendanceWindow[] @relation("SpecialStudentWindow")
+
+  @@map("students")
+}
+
+/// Full allocation history — one active row per student at any time.
+/// When a student changes rooms, vacatedAt is set on the old row and
+/// a new ACTIVE row is created. History is never deleted.
+model HostelAllocation {
+  id          String           @id @default(uuid())
+  allocatedAt DateTime         @default(now())
+  vacatedAt   DateTime?        // null = currently active
+  status      AllocationStatus @default(ACTIVE)
+  reason      String?          // reason for allocation or change
+  allocatedBy String?          // userId of Admin/Warden who made the change (future)
+  notes       String?
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("hostel_allocations")
+}
+
+/// Student's academic progress — one row per student per semester.
+/// yearLabel and semesterLabel are stored as display strings for easy rendering.
+/// semesterId FK allows calendar-based automatic detection.
+model StudentAcademicHistory {
+  id            String   @id @default(uuid())
+  yearNumber    Int      @default(1)   // 1, 2, 3, 4
+  yearLabel     String            // "1st Year", "2nd Year" …
+  semesterLabel String            // "1st Semester", "2nd Semester" …
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+
+  semesterId String?
+  semester   Semester? @relation(fields: [semesterId], references: [id])
+
+  @@unique([studentId, academicYearId])
+  @@map("student_academic_history")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ATTENDANCE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model AttendanceSettings {
+  id           String   @id @default(uuid())
+  latitude     Float
+  longitude    Float
+  radiusMeters Float    @default(100)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("attendance_settings")
+}
+
+model AttendanceWindow {
+  id           String              @id @default(uuid())
+  date         DateTime            @db.Date
+  startTime    String              // "20:30" (HH:mm, Asia/Kolkata)
+  endTime      String              // "20:40"
+  isDefault    Boolean             @default(true)
+  isSpecial    Boolean             @default(false)
+  reason       String?
+  approvedBy   String?
+  approvedAt   DateTime?
+  windowStatus SpecialWindowStatus @default(ACTIVE)
+
+  studentId String?
+  student   Student? @relation("SpecialStudentWindow", fields: [studentId], references: [id])
+
+  attendance Attendance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("attendance_windows")
+}
+
+model Attendance {
+  id                  String               @id @default(uuid())
+  date                DateTime             @db.Date
+  markedAt            DateTime
+  status              AttendanceStatus     @default(PRESENT)
+  locationType        LocationVerification @default(UNVERIFIED)
+  latitude            Float?
+  longitude           Float?
+  distanceFromHostel  Float?
+  photoUrl            String?
+  photoFilename       String?
+  isSpecialWindow     Boolean              @default(false)
+  specialWindowReason String?
+  excuseReason        String?
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  attendanceWindowId String?
+  attendanceWindow   AttendanceWindow? @relation(fields: [attendanceWindowId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([studentId, date])
+  @@map("attendance")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EMERGENCY CONTACTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model EmergencyContact {
+  id          String   @id @default(uuid())
+  name        String
+  designation String
+  phone       String
+  email       String?
+  category    String   @default("General")
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("emergency_contacts")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REQUESTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model Request {
+  id                String        @id @default(uuid())
+  type              RequestType
+  fromDate          DateTime      @db.Date
+  toDate            DateTime      @db.Date
+  reason            String
+  destination       String?
+  additionalDetails String?
+  status            RequestStatus @default(PENDING)
+  reviewedAt        DateTime?
+  reviewNote        String?
+  reviewedBy        String?       // userId of Warden/Admin who reviewed (future)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  @@map("requests")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROBLEMS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model Problem {
+  id          String          @id @default(uuid())
+  category    ProblemCategory
+  description String
+  photoUrl    String?
+  roomNumber  String          // denormalised snapshot — room at time of report
+  status      ProblemStatus   @default(PENDING)
+  resolvedAt  DateTime?
+  resolveNote String?
+  resolvedBy  String?         // userId of Warden/Admin (future)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  @@map("problems")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FEES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model Fee {
+  id          String   @id @default(uuid())
+  totalAmount Float
+  paidAmount  Float    @default(0)
+  dueDate     DateTime @db.Date
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+
+  payments FeePayment[]
+
+  @@unique([studentId, academicYearId])
+  @@map("fees")
+}
+
+model FeePayment {
+  id         String        @id @default(uuid())
+  amount     Float
+  paidAt     DateTime
+  reference  String        @unique
+  status     PaymentStatus @default(SUCCESS)
+  receiptUrl String?
+  createdAt  DateTime      @default(now())
+
+  feeId String
+  fee   Fee    @relation(fields: [feeId], references: [id])
+
+  @@map("fee_payments")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NOTICES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model Notice {
+  id          String         @id @default(uuid())
+  title       String
+  description String
+  category    String         @default("General")
+  priority    NoticePriority @default(MEDIUM)
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  academicYearId String?
+  academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id])
+
+  @@map("notices")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  @@map("notifications")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ENTRY / EXIT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model EntryExitRecord {
+  id        String          @id @default(uuid())
+  date      DateTime        @db.Date
+  entryTime DateTime?
+  exitTime  DateTime?
+  status    EntryExitStatus @default(OUT)
+  note      String?
+  recordedBy String?        // userId of Watchman who recorded (future)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  @@map("entry_exit_records")
+}
