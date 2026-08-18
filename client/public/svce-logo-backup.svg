@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" fill="none">
+  <!-- Shield outer shape -->
+  <path d="M100 8 L185 35 L185 130 Q185 195 100 232 Q15 195 15 130 L15 35 Z"
+    fill="white" stroke="black" stroke-width="5"/>
+  <!-- Shield inner border -->
+  <path d="M100 18 L175 42 L175 128 Q175 188 100 222 Q25 188 25 128 L25 42 Z"
+    fill="none" stroke="black" stroke-width="3"/>
+
+  <!-- Top text: SVCE BENGALURU -->
+  <text x="100" y="50" text-anchor="middle" font-family="Arial, sans-serif"
+    font-size="13" font-weight="900" fill="black" letter-spacing="1">SVCE BENGALURU</text>
+
+  <!-- Horizontal divider top -->
+  <line x1="32" y1="57" x2="168" y2="57" stroke="black" stroke-width="2"/>
+
+  <!-- Stars left and right of top section -->
+  <text x="42" y="75" text-anchor="middle" font-size="12" fill="black">★</text>
+  <text x="158" y="75" text-anchor="middle" font-size="12" fill="black">★</text>
+
+  <!-- Building/institution icon (simplified) -->
+  <!-- Main building -->
+  <rect x="72" y="62" width="56" height="32" fill="black" rx="1"/>
+  <rect x="74" y="64" width="52" height="28" fill="white" rx="1"/>
+  <!-- Columns -->
+  <rect x="77" y="66" width="7" height="24" fill="black" rx="1"/>
+  <rect x="87" y="66" width="7" height="24" fill="black" rx="1"/>
+  <rect x="97" y="66" width="7" height="24" fill="black" rx="1"/>
+  <rect x="107" y="66" width="7" height="24" fill="black" rx="1"/>
+  <rect x="117" y="66" width="7" height="24" fill="black" rx="1"/>
+  <!-- Roof/pediment -->
+  <polygon points="70,62 100,50 130,62" fill="black"/>
+  <polygon points="73,62 100,53 127,62" fill="white"/>
+
+  <!-- Computer/book icon (simplified grid) -->
+  <rect x="88" y="68" width="24" height="18" fill="black" rx="2"/>
+  <rect x="90" y="70" width="20" height="14" fill="white" rx="1"/>
+  <line x1="90" y1="75" x2="110" y2="75" stroke="black" stroke-width="1"/>
+  <line x1="90" y1="79" x2="110" y2="79" stroke="black" stroke-width="1"/>
+  <line x1="100" y1="70" x2="100" y2="84" stroke="black" stroke-width="1"/>
+
+  <!-- Horizontal divider middle -->
+  <line x1="32" y1="100" x2="168" y2="100" stroke="black" stroke-width="2"/>
+
+  <!-- Inner shield / crest area -->
+  <path d="M100 108 L148 122 L148 162 Q148 190 100 205 Q52 190 52 162 L52 122 Z"
+    fill="none" stroke="black" stroke-width="2.5"/>
+
+  <!-- Stars in crest -->
+  <text x="68" y="130" text-anchor="middle" font-size="11" fill="black">★</text>
+  <text x="132" y="130" text-anchor="middle" font-size="11" fill="black">★</text>
+
+  <!-- EST 2001 text -->
+  <text x="100" y="150" text-anchor="middle" font-family="Arial, sans-serif"
+    font-size="11" font-weight="700" fill="black" letter-spacing="1">EST · 2001</text>
+
+  <!-- Laurel leaves left -->
+  <g transform="translate(28, 155)" fill="black">
+    <ellipse cx="0" cy="0" rx="5" ry="10" transform="rotate(-60)" />
+    <ellipse cx="8" cy="-5" rx="5" ry="10" transform="rotate(-40)" />
+    <ellipse cx="14" cy="-12" rx="5" ry="10" transform="rotate(-20)" />
+    <ellipse cx="18" cy="-20" rx="4" ry="9" transform="rotate(0)" />
+  </g>
+
+  <!-- Laurel leaves right -->
+  <g transform="translate(172, 155)" fill="black">
+    <ellipse cx="0" cy="0" rx="5" ry="10" transform="rotate(60)" />
+    <ellipse cx="-8" cy="-5" rx="5" ry="10" transform="rotate(40)" />
+    <ellipse cx="-14" cy="-12" rx="5" ry="10" transform="rotate(20)" />
+    <ellipse cx="-18" cy="-20" rx="4" ry="9" transform="rotate(0)" />
+  </g>
+</svg>

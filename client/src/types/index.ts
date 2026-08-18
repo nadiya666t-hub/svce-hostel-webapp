@@ -161,7 +161,7 @@ export interface LocationVerificationResult {
 
 // ─── Requests ─────────────────────────────────────────────────────────────────
 
-export type RequestType = 'GOING_HOME' | 'OUTING' | 'LEAVE' | 'EMERGENCY_LEAVE' | 'OTHER'
+export type RequestType = 'GOING_HOME' | 'OUTING' | 'LEAVE' | 'EMERGENCY_LEAVE' | 'OTHER' | 'EMERGENCY' | 'IMPORTANT' | 'MODERATE'
 export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 
 export interface StudentRequest {

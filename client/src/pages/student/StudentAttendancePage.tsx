@@ -10,49 +10,41 @@ import {
   ResponsiveContainer, Cell,
 } from 'recharts'
 import { useAttendance } from '@/hooks/useAttendance'
+import { useTheme } from '@/hooks/useTheme'
 import type { AttendanceRecord, AttendanceStatus } from '@/types'
 import clsx from 'clsx'
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true,
+    timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
   })
 }
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+    timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long', year: 'numeric',
   })
 }
 function fmtDateShort(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+    timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric',
   })
 }
 
+// Only show Present, Late Present, Absent in the UI (no Excused/Special per spec)
 const STATUS_META: Record<AttendanceStatus, { label: string; color: string; bg: string; dot: string }> = {
-  PRESENT:     { label: 'Present',      color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500' },
-  LATE_PRESENT:{ label: 'Late Present', color: 'text-amber-700',   bg: 'bg-amber-50 border-amber-200',    dot: 'bg-amber-500'   },
-  ABSENT:      { label: 'Absent',       color: 'text-red-700',     bg: 'bg-red-50 border-red-200',        dot: 'bg-red-500'     },
-  EXCUSED:     { label: 'Excused',      color: 'text-blue-700',    bg: 'bg-blue-50 border-blue-200',      dot: 'bg-blue-500'    },
-  SPECIAL:     { label: 'Special',      color: 'text-violet-700',  bg: 'bg-violet-50 border-violet-200',  dot: 'bg-violet-500'  },
+  PRESENT:      { label: 'Present',      color: 'text-emerald-600', bg: 'bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-500' },
+  LATE_PRESENT: { label: 'Late Present', color: 'text-amber-500',   bg: 'bg-amber-500/10 border-amber-500/20',    dot: 'bg-amber-500'   },
+  ABSENT:       { label: 'Absent',       color: 'text-red-500',     bg: 'bg-red-500/10 border-red-500/20',        dot: 'bg-red-500'     },
+  EXCUSED:      { label: 'Excused',      color: 'text-emerald-600', bg: 'bg-emerald-500/10 border-emerald-500/20',dot: 'bg-emerald-400' },
+  SPECIAL:      { label: 'Present',      color: 'text-emerald-600', bg: 'bg-emerald-500/10 border-emerald-500/20',dot: 'bg-emerald-400' },
 }
 
-// â”€â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-/** Top date + IST clock banner */
 function DateTimeBanner({ currentTime }: { currentTime: Date }) {
+  const { isDark } = useTheme()
   const timeStr = currentTime.toLocaleTimeString('en-IN', {
     timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
   })
@@ -60,142 +52,118 @@ function DateTimeBanner({ currentTime }: { currentTime: Date }) {
     timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
   return (
-    <div className="bg-gradient-to-br from-primary-600 to-violet-600 rounded-2xl p-5 text-white ">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-accent-200 text-xs font-medium uppercase tracking-wide mb-1">Today</p>
-          <p className="text-lg font-bold leading-tight">{dateStr}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-accent-200 text-xs font-medium uppercase tracking-wide mb-1">IST</p>
-          <p className="text-2xl font-mono font-bold tabular-nums">{timeStr}</p>
-        </div>
+    <div className={clsx('rounded-2xl border p-5 flex items-center justify-between gap-4',
+      isDark ? 'bg-dark-800 border-white/8' : 'bg-white border-zinc-200')}>
+      <div>
+        <p className={clsx('text-[10px] uppercase tracking-widest font-mono mb-1', isDark ? 'text-zinc-500' : 'text-zinc-400')}>Today</p>
+        <p className={clsx('text-sm font-semibold', isDark ? 'text-zinc-200' : 'text-zinc-800')}>{dateStr}</p>
+      </div>
+      <div className="text-right">
+        <p className={clsx('text-[10px] uppercase tracking-widest font-mono mb-1', isDark ? 'text-zinc-500' : 'text-zinc-400')}>IST</p>
+        <p className={clsx('text-2xl font-mono font-bold tabular-nums', isDark ? 'text-white' : 'text-zinc-900')}>{timeStr}</p>
       </div>
     </div>
   )
 }
 
-/** Window status card */
-function WindowCard({
-  windowState,
-  window,
-}: {
+function WindowCard({ windowState, window }: {
   windowState: string | undefined
   window: { startTime: string; endTime: string; isSpecial: boolean; reason: string | null } | null | undefined
 }) {
-  const isOpen = windowState === 'OPEN'
+  const { isDark } = useTheme()
+  const isOpen   = windowState === 'OPEN'
   const isBefore = windowState === 'BEFORE'
   const isClosed = windowState === 'CLOSED'
 
   return (
-    <div className={clsx(
-      'rounded-2xl border p-5 flex items-start gap-4 transition-all',
-      isOpen   ? 'bg-emerald-50 border-emerald-200' :
-      isBefore ? 'bg-blue-50 border-blue-200' :
-      isClosed ? 'dark:bg-dark-800 bg-zinc-50 dark:border-white/8 border-zinc-200' :
-                 'dark:bg-dark-800 bg-zinc-50 dark:border-white/8 border-zinc-200'
+    <div className={clsx('rounded-2xl border p-4 flex items-start gap-3 transition-all',
+      isOpen   ? 'bg-emerald-500/10 border-emerald-500/25' :
+      isBefore ? 'bg-accent-600/10 border-accent-600/25' :
+      isDark   ? 'bg-dark-800 border-white/8' : 'bg-zinc-50 border-zinc-200'
     )}>
-      <div className={clsx(
-        'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
-        isOpen ? 'bg-emerald-100' : isBefore ? 'bg-blue-100' : 'dark:bg-dark-700 bg-zinc-100'
-      )}>
-        <Clock size={20} className={isOpen ? 'text-emerald-600' : isBefore ? 'text-blue-600' : 'dark:text-zinc-500 text-zinc-400'} />
+      <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center shrink-0',
+        isOpen ? 'bg-emerald-500/20' : isBefore ? 'bg-accent-600/20' : isDark ? 'bg-dark-700' : 'bg-zinc-100')}>
+        <Clock size={17} className={isOpen ? 'text-emerald-400' : isBefore ? 'text-accent-400' : isDark ? 'text-zinc-500' : 'text-zinc-400'} />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-0.5">
-          <p className="text-sm font-bold dark:text-zinc-100 text-zinc-900">Attendance Window</p>
+          <p className={clsx('text-sm font-bold', isDark ? 'text-zinc-100' : 'text-zinc-900')}>Attendance Window</p>
           {window?.isSpecial && (
-            <span className="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-semibold">
-              Special
-            </span>
+            <span className="text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/25 px-2 py-0.5 rounded-full font-semibold">Special</span>
           )}
         </div>
         {window ? (
-          <p className="text-base font-semibold dark:text-zinc-200 text-zinc-700">
-            {window.startTime} â€“ {window.endTime}{' '}
-            <span className="text-xs dark:text-zinc-500 text-zinc-400 font-normal">IST</span>
+          <p className={clsx('text-base font-bold font-mono', isDark ? 'text-zinc-200' : 'text-zinc-700')}>
+            {window.startTime} – {window.endTime}
+            <span className={clsx('text-xs font-normal ml-1', isDark ? 'text-zinc-500' : 'text-zinc-400')}>IST</span>
           </p>
         ) : (
-          <p className="text-sm dark:text-zinc-500 text-zinc-400">No window configured for today</p>
+          <p className={clsx('text-sm', isDark ? 'text-zinc-500' : 'text-zinc-400')}>
+            Normal window: <span className="font-mono font-semibold">8:30 PM – 8:40 PM</span>
+          </p>
         )}
         {window?.reason && (
-          <p className="text-xs text-amber-700 mt-1 flex items-center gap-1">
+          <p className="text-xs text-amber-400 mt-1 flex items-center gap-1">
             <Info size={11} /> {window.reason}
           </p>
         )}
-        <p className={clsx(
-          'text-xs font-semibold mt-1.5',
-          isOpen ? 'text-emerald-600' : isBefore ? 'text-blue-600' : isClosed ? 'dark:text-zinc-400 text-zinc-500' : 'dark:text-zinc-500 text-zinc-400'
-        )}>
-          {isOpen   ? 'â— Open now' :
-           isBefore ? `Opens at ${window?.startTime} IST` :
-           isClosed ? 'Window closed for today' :
-                      'No attendance window today'}
+        <p className={clsx('text-xs font-semibold mt-1.5',
+          isOpen ? 'text-emerald-400' : isBefore ? 'text-accent-400' : isClosed ? isDark ? 'text-zinc-400' : 'text-zinc-500' : isDark ? 'text-zinc-500' : 'text-zinc-400')}>
+          {isOpen   ? '● Open now — attendance is active' :
+           isBefore ? `Opens at ${window?.startTime ?? '8:30 PM'} IST` :
+           isClosed ? 'Attendance window closed for today' :
+                      'Attendance opens at 8:30 PM tonight'}
         </p>
       </div>
     </div>
   )
 }
 
-/** GPS location card */
-function LocationCard({
-  location,
-  onRequest,
-}: {
+function LocationCard({ location, onRequest }: {
   location: ReturnType<typeof useAttendance>['location']
   onRequest: () => void
 }) {
-  const verified = location.result?.verified
+  const { isDark } = useTheme()
+  const verified  = location.result?.verified
   const hasResult = !!location.result
   const permDenied = location.permission === 'denied'
 
   return (
-    <div className={clsx(
-      'rounded-2xl border p-5 flex items-start gap-4',
-      verified ? 'bg-emerald-50 border-emerald-200' :
-      hasResult ? 'bg-red-50 border-red-100' :
-      permDenied ? 'bg-red-50 border-red-100' :
-                   'bg-white dark:border-white/8 border-zinc-200 '
+    <div className={clsx('rounded-2xl border p-4 flex items-start gap-3',
+      verified   ? 'bg-emerald-500/10 border-emerald-500/25' :
+      hasResult || permDenied ? 'bg-red-500/10 border-red-500/25' :
+      isDark ? 'bg-dark-800 border-white/8' : 'bg-white border-zinc-200'
     )}>
-      <div className={clsx(
-        'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
-        verified ? 'bg-emerald-100' : hasResult || permDenied ? 'bg-red-100' : 'bg-accent-600/10'
-      )}>
-        <Navigation size={20} className={verified ? 'text-emerald-600' : hasResult || permDenied ? 'text-red-500' : 'text-accent-400'} />
+      <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center shrink-0',
+        verified ? 'bg-emerald-500/20' : hasResult || permDenied ? 'bg-red-500/20' : isDark ? 'bg-accent-600/15' : 'bg-blue-50')}>
+        <Navigation size={17} className={verified ? 'text-emerald-400' : hasResult || permDenied ? 'text-red-400' : 'text-accent-400'} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold dark:text-zinc-100 text-zinc-900 mb-0.5">Location</p>
+        <p className={clsx('text-sm font-bold mb-0.5', isDark ? 'text-zinc-100' : 'text-zinc-900')}>Location</p>
         {location.checking ? (
-          <p className="text-sm dark:text-zinc-400 text-zinc-500 flex items-center gap-1.5">
-            <Loader2 size={13} className="animate-spin" /> Verifying locationâ€¦
+          <p className={clsx('text-sm flex items-center gap-1.5', isDark ? 'text-zinc-400' : 'text-zinc-500')}>
+            <Loader2 size={13} className="animate-spin" /> Verifying…
           </p>
         ) : verified ? (
-          <>
-            <p className="text-sm font-semibold text-emerald-700 flex items-center gap-1">
-              <CheckCircle2 size={14} /> Verified â€” inside hostel area
-            </p>
-            <p className="text-xs text-emerald-600 mt-0.5">{location.result?.distance} m from hostel</p>
-          </>
+          <p className="text-sm font-semibold text-emerald-400 flex items-center gap-1">
+            <CheckCircle2 size={13} /> Verified — inside hostel area
+            <span className="text-xs text-emerald-500 ml-1">({location.result?.distance} m)</span>
+          </p>
         ) : hasResult ? (
-          <>
-            <p className="text-sm font-semibold text-red-600 flex items-center gap-1">
-              <XCircle size={14} /> Outside hostel area
-            </p>
-            <p className="text-xs text-red-500 mt-0.5">{location.result?.distance} m away (max {location.result?.radiusMeters} m)</p>
-          </>
+          <p className="text-sm font-semibold text-red-400 flex items-center gap-1">
+            <XCircle size={13} /> Outside hostel area ({location.result?.distance} m away)
+          </p>
         ) : permDenied ? (
-          <p className="text-sm text-red-600">{location.error}</p>
-        ) : location.permission === 'unknown' ? (
-          <p className="text-sm dark:text-zinc-400 text-zinc-500">Location permission required for attendance</p>
+          <p className="text-sm text-red-400">{location.error}</p>
         ) : (
-          <p className="text-sm dark:text-zinc-400 text-zinc-500">Tap to check your location</p>
+          <p className={clsx('text-sm', isDark ? 'text-zinc-400' : 'text-zinc-500')}>
+            {location.permission === 'unknown' ? 'Location permission required' : 'Tap to check your location'}
+          </p>
         )}
         {!location.checking && !verified && (
-          <button
-            onClick={onRequest}
-            className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-400 hover:text-accent-300 bg-accent-600/10 hover:bg-accent-600/15 px-3 py-1.5 rounded-lg transition-colors"
-          >
-            <MapPin size={12} />
+          <button onClick={onRequest}
+            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-400 hover:text-accent-300 bg-accent-600/10 hover:bg-accent-600/15 px-3 py-1.5 rounded-lg transition-colors">
+            <MapPin size={11} />
             {location.permission === 'unknown' ? 'Allow Location' : 'Retry Location'}
           </button>
         )}
@@ -204,307 +172,216 @@ function LocationCard({
   )
 }
 
-/** Camera section â€” captures a live photo via the device camera.
- *  On phones: tries rear camera first, falls back to front camera.
- *  Photo is REQUIRED â€” submission without a photo is rejected by the backend.
- */
-function CameraSection({
-  cameraState,
-  capturedPhoto,
-  canOpen,
-  canOpenReason,
-  onOpenCamera,
-  onCapture,
-  onRetake,
-  onSubmit,
-  submitError,
-  submitSuccess,
-  setCameraState,
+function CameraPanel({
+  cameraState, capturedPhoto, canOpen, canOpenReason,
+  onOpenCamera, onCapture, onRetake, onSubmit,
+  submitError, submitSuccess, setCameraState,
 }: {
   cameraState: ReturnType<typeof useAttendance>['cameraState']
   capturedPhoto: ReturnType<typeof useAttendance>['capturedPhoto']
-  canOpen: boolean
-  canOpenReason: string
+  canOpen: boolean; canOpenReason: string
   onOpenCamera: () => void
   onCapture: (blob: Blob, mime: string) => void
-  onRetake: () => void
-  onSubmit: () => void
-  submitError: string | null
-  submitSuccess: boolean
+  onRetake: () => void; onSubmit: () => void
+  submitError: string | null; submitSuccess: boolean
   setCameraState: (s: ReturnType<typeof useAttendance>['cameraState']) => void
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const { isDark } = useTheme()
+  const videoRef  = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const [cameraError, setCameraError] = useState<string | null>(null)
 
-  // Try rear camera first (mobile), then front, then any
   const startCamera = useCallback(async () => {
     setCameraError(null)
-
     const attempts: MediaStreamConstraints[] = [
       { video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
       { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false },
       { video: true, audio: false },
     ]
-
     let stream: MediaStream | null = null
-    let lastError: string = ''
-
-    for (const constraints of attempts) {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia(constraints)
-        break
-      } catch (err) {
+    let lastError = ''
+    for (const c of attempts) {
+      try { stream = await navigator.mediaDevices.getUserMedia(c); break }
+      catch (err) {
         const e = err as { name?: string }
         if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-          lastError = 'Camera permission denied. Please allow camera access in your browser settings and try again.'
-          break  // no point retrying â€” permission is denied
+          lastError = 'Camera permission denied. Please allow camera access in your browser settings.'; break
         }
-        // NotFoundError / OverconstrainedError â€” try next constraint
         lastError = 'Camera not available. Please check your camera and try again.'
       }
     }
-
-    if (!stream) {
-      setCameraError(lastError)
-      setCameraState('locked')
-      return
-    }
-
+    if (!stream) { setCameraError(lastError); setCameraState('locked'); return }
     streamRef.current = stream
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream
-      videoRef.current.play()
-    }
+    if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play() }
   }, [setCameraState])
 
-  // Stop stream when leaving camera view
   const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop())
-      streamRef.current = null
-    }
+    streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null
   }, [])
 
   useEffect(() => {
-    if (cameraState === 'capturing') startCamera()
-    else stopCamera()
+    if (cameraState === 'capturing') startCamera(); else stopCamera()
     return stopCamera
   }, [cameraState, startCamera, stopCamera])
 
-  // Capture frame from video â†’ canvas â†’ Blob
   const captureFrame = useCallback(() => {
-    const video = videoRef.current
-    const canvas = canvasRef.current
+    const video = videoRef.current; const canvas = canvasRef.current
     if (!video || !canvas) return
-    canvas.width = video.videoWidth || 640
-    canvas.height = video.videoHeight || 480
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480
+    const ctx = canvas.getContext('2d'); if (!ctx) return
     ctx.drawImage(video, 0, 0)
-    canvas.toBlob(
-      (blob) => { if (blob) onCapture(blob, 'image/jpeg') },
-      'image/jpeg',
-      0.88,
-    )
+    canvas.toBlob(blob => { if (blob) onCapture(blob, 'image/jpeg') }, 'image/jpeg', 0.88)
   }, [onCapture])
 
-  // â”€â”€ Already marked â”€â”€
-  if (submitSuccess || cameraState === 'done') {
-    return (
-      <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-6 text-center">
-        <CheckCircle2 size={40} className="text-emerald-500 mx-auto mb-3" />
-        <p className="text-base font-bold text-emerald-700">Attendance Marked!</p>
-        <p className="text-sm text-emerald-600 mt-1">Your attendance has been recorded for today.</p>
-      </div>
-    )
-  }
+  const panelBase = clsx('rounded-2xl border overflow-hidden h-full min-h-[280px] flex flex-col',
+    isDark ? 'bg-dark-800 border-white/8' : 'bg-white border-zinc-200')
 
-  // â”€â”€ Camera permission / hardware error â”€â”€
-  if (cameraError) {
-    return (
-      <div className="rounded-2xl bg-red-50 border border-red-200 p-6 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-4">
-          <AlertCircle size={24} className="text-red-500" />
+  if (submitSuccess || cameraState === 'done') return (
+    <div className={clsx(panelBase, 'items-center justify-center p-6 text-center bg-emerald-500/10 border-emerald-500/25')}>
+      <CheckCircle2 size={44} className="text-emerald-400 mb-3" />
+      <p className="text-base font-bold text-emerald-400">Attendance Marked!</p>
+      <p className="text-xs text-emerald-500 mt-1">Recorded for today.</p>
+    </div>
+  )
+
+  if (cameraError) return (
+    <div className={clsx(panelBase, 'items-center justify-center p-6 text-center bg-red-500/10 border-red-500/25')}>
+      <AlertCircle size={36} className="text-red-400 mb-3" />
+      <p className="text-sm font-bold text-red-400">Camera Error</p>
+      <p className="text-xs text-red-500 mt-1 leading-relaxed max-w-[200px] mx-auto">{cameraError}</p>
+      <button onClick={() => { setCameraError(null); setCameraState('locked') }}
+        className="mt-4 px-4 py-2 text-xs font-semibold text-red-400 border border-red-500/30 rounded-xl hover:bg-red-500/10 transition-colors">
+        Try Again
+      </button>
+    </div>
+  )
+
+  if (!canOpen && cameraState === 'locked') return (
+    <div className={clsx(panelBase, 'items-center justify-center p-6 text-center')}>
+      <div className={clsx('w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4',
+        isDark ? 'bg-dark-700' : 'bg-zinc-100')}>
+        <Lock size={24} className={isDark ? 'text-zinc-500' : 'text-zinc-400'} />
+      </div>
+      <p className={clsx('text-sm font-bold mb-2', isDark ? 'text-zinc-300' : 'text-zinc-600')}>Camera Locked</p>
+      <p className={clsx('text-xs leading-relaxed max-w-[200px] mx-auto', isDark ? 'text-zinc-500' : 'text-zinc-400')}>{canOpenReason}</p>
+    </div>
+  )
+
+  if (canOpen && cameraState === 'locked') return (
+    <div className={clsx(panelBase, 'items-center justify-center p-6 text-center bg-accent-600/10 border-accent-600/25')}>
+      <div className="w-14 h-14 rounded-2xl bg-accent-600/20 flex items-center justify-center mx-auto mb-4">
+        <Unlock size={24} className="text-accent-400" />
+      </div>
+      <p className="text-sm font-bold text-accent-300 mb-1">Camera Ready</p>
+      <p className="text-xs text-accent-400 mb-5">Take a live photo to mark attendance</p>
+      <button onClick={onOpenCamera}
+        className="btn-accent text-sm px-6 py-2.5 flex items-center gap-2">
+        <Camera size={16} /> Take Attendance Photo
+      </button>
+    </div>
+  )
+
+  if (cameraState === 'capturing') return (
+    <div className={clsx(panelBase, 'bg-black')}>
+      <div className="relative flex-1">
+        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+        <div className="absolute inset-4 pointer-events-none">
+          {['top-0 left-0','top-0 right-0','bottom-0 left-0','bottom-0 right-0'].map((pos, i) => (
+            <div key={i} className={`absolute w-7 h-7 border-white border-2 ${pos} ${i<2?'border-b-0':'border-t-0'} ${i%2===0?'border-r-0':'border-l-0'}`} />
+          ))}
         </div>
-        <p className="text-sm font-bold text-red-700">Camera Error</p>
-        <p className="text-xs text-red-600 mt-1 max-w-xs mx-auto leading-relaxed">{cameraError}</p>
-        <button
-          onClick={() => { setCameraError(null); setCameraState('locked') }}
-          className="mt-4 px-4 py-2 text-xs font-semibold text-red-700 border border-red-300 rounded-xl hover:bg-red-100 transition-colors"
-        >
-          Try Again
+      </div>
+      <canvas ref={canvasRef} className="hidden" />
+      <div className="bg-zinc-900 p-4 flex justify-center gap-3">
+        <button onClick={() => { stopCamera(); setCameraState('locked') }}
+          className="px-5 py-2 rounded-xl border border-zinc-600 text-zinc-300 text-sm font-medium hover:bg-zinc-800 transition-colors">
+          Cancel
+        </button>
+        <button onClick={captureFrame}
+          className="btn-accent px-6 py-2 flex items-center gap-2 text-sm">
+          <Camera size={15} /> Capture
         </button>
       </div>
-    )
-  }
+    </div>
+  )
 
-  // â”€â”€ Camera locked â”€â”€
-  if (!canOpen && cameraState === 'locked') {
-    return (
-      <div className="rounded-2xl dark:bg-dark-800 bg-zinc-50 border dark:border-white/8 border-zinc-200 p-6 text-center">
-        <div className="w-14 h-14 rounded-2xl dark:bg-dark-700 bg-zinc-100 flex items-center justify-center mx-auto mb-4">
-          <Lock size={24} className="dark:text-zinc-500 text-zinc-400" />
+  if (cameraState === 'preview' && capturedPhoto) return (
+    <div className={clsx(panelBase)}>
+      <div className="relative flex-1 bg-black">
+        <img src={capturedPhoto.url} alt="Preview" className="w-full h-full object-cover" />
+        <div className="absolute top-3 left-3 bg-black/70 text-white text-xs px-2 py-1 rounded-lg flex items-center gap-1">
+          <ImageIcon size={11} /> Preview
         </div>
-        <p className="text-sm font-bold dark:text-zinc-300 text-zinc-600">Camera Locked</p>
-        <p className="text-xs dark:text-zinc-500 text-zinc-400 mt-1 max-w-xs mx-auto leading-relaxed">{canOpenReason}</p>
       </div>
-    )
-  }
-  if (canOpen && cameraState === 'locked') {
-    return (
-      <div className="rounded-2xl bg-accent-600/10 border border-accent-600/30 p-6 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-accent-600/15 flex items-center justify-center mx-auto mb-4">
-          <Unlock size={24} className="text-accent-400" />
+      {submitError && (
+        <div className="mx-4 mt-3 flex items-start gap-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl p-3 text-xs">
+          <AlertCircle size={13} className="shrink-0 mt-0.5" /> {submitError}
         </div>
-        <p className="text-sm font-bold text-accent-300">Camera Ready</p>
-        <p className="text-xs text-accent-400 mt-1 mb-4">Take a live photo to mark your attendance</p>
-        <button
-          onClick={onOpenCamera}
-          className="inline-flex items-center gap-2 px-5 py-2.5 btn-accent text-white text-sm font-semibold rounded-xl  hover:opacity-90 active:scale-[0.98] transition-all"
-        >
-          <Camera size={16} /> Take Attendance Photo
+      )}
+      <div className="p-4 flex gap-3">
+        <button onClick={onRetake}
+          className={clsx('flex-1 py-2.5 border rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2',
+            isDark ? 'border-white/8 text-zinc-300 hover:bg-dark-700' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50')}>
+          <RefreshCw size={13} /> Retake
+        </button>
+        <button onClick={onSubmit}
+          className="flex-1 py-2.5 btn-accent text-sm flex items-center justify-center gap-2">
+          <CheckCircle2 size={13} /> Submit
         </button>
       </div>
-    )
-  }
+    </div>
+  )
 
-  // â”€â”€ Live camera â”€â”€
-  if (cameraState === 'capturing') {
-    return (
-      <div className="rounded-2xl overflow-hidden border dark:border-white/8 border-zinc-200  bg-black">
-        <div className="relative">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full max-h-72 object-cover"
-          />
-          {/* Corner guides */}
-          <div className="absolute inset-4 pointer-events-none">
-            {['top-0 left-0', 'top-0 right-0', 'bottom-0 left-0', 'bottom-0 right-0'].map((pos, i) => (
-              <div key={i} className={`absolute w-6 h-6 border-white border-2 ${pos} ${i < 2 ? 'border-b-0' : 'border-t-0'} ${i % 2 === 0 ? 'border-r-0' : 'border-l-0'}`} />
-            ))}
-          </div>
-        </div>
-        <canvas ref={canvasRef} className="hidden" />
-        <div className="bg-slate-900 p-4 flex justify-center gap-4">
-          <button
-            onClick={() => { stopCamera(); setCameraState('locked') }}
-            className="px-4 py-2 rounded-xl border border-slate-600 text-slate-300 text-sm font-medium hover:bg-slate-800 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={captureFrame}
-            className="flex items-center gap-2 px-6 py-2 btn-accent text-white text-sm font-semibold rounded-xl  hover:opacity-90 transition-all"
-          >
-            <Camera size={16} /> Capture
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // â”€â”€ Preview â”€â”€
-  if (cameraState === 'preview' && capturedPhoto) {
-    return (
-      <div className="rounded-2xl overflow-hidden border dark:border-white/8 border-zinc-200 ">
-        <div className="relative bg-black">
-          <img src={capturedPhoto.url} alt="Attendance preview" className="w-full max-h-72 object-cover" />
-          <div className="absolute top-3 left-3 bg-black/60 text-white text-xs px-2 py-1 rounded-lg flex items-center gap-1">
-            <ImageIcon size={11} /> Preview
-          </div>
-        </div>
-        {submitError && (
-          <div className="mx-4 mt-3 flex items-start gap-2 bg-red-50 border border-red-100 text-red-700 rounded-xl p-3 text-sm">
-            <AlertCircle size={14} className="shrink-0 mt-0.5" /> {submitError}
-          </div>
-        )}
-        <div className="p-4 flex gap-3">
-          <button
-            onClick={onRetake}
-            className="flex-1 py-2.5 border dark:border-white/8 border-zinc-200 dark:text-zinc-300 text-zinc-600 text-sm font-semibold rounded-xl hover:dark:bg-dark-800 bg-zinc-50 transition-colors flex items-center justify-center gap-2"
-          >
-            <RefreshCw size={14} /> Retake
-          </button>
-          <button
-            onClick={onSubmit}
-            className="flex-1 py-2.5 btn-accent text-white text-sm font-semibold rounded-xl  hover:opacity-90 transition-all flex items-center justify-center gap-2"
-          >
-            <CheckCircle2 size={14} /> Submit
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // â”€â”€ Submitting â”€â”€
-  if (cameraState === 'submitting') {
-    return (
-      <div className="rounded-2xl bg-accent-600/10 border border-accent-600/30 p-8 text-center">
-        <Loader2 size={36} className="animate-spin text-accent-400 mx-auto mb-3" />
-        <p className="text-sm font-semibold text-accent-300">Submitting attendanceâ€¦</p>
-        <p className="text-xs text-accent-400 mt-1">Please wait, verifying with server</p>
-      </div>
-    )
-  }
+  if (cameraState === 'submitting') return (
+    <div className={clsx(panelBase, 'items-center justify-center p-8 text-center bg-accent-600/10 border-accent-600/25')}>
+      <Loader2 size={36} className="animate-spin text-accent-400 mx-auto mb-3" />
+      <p className="text-sm font-semibold text-accent-300">Submitting…</p>
+      <p className="text-xs text-accent-400 mt-1">Verifying with server</p>
+    </div>
+  )
 
   return null
 }
 
-/** Single attendance history row with accordion expand */
 function HistoryRow({ record, index }: { record: AttendanceRecord; index: number }) {
   const [open, setOpen] = useState(false)
+  const { isDark } = useTheme()
   const meta = STATUS_META[record.status] ?? STATUS_META.ABSENT
 
   return (
-    <div
-      className={clsx(
-        'border dark:border-white/5 border-zinc-200 rounded-xl overflow-hidden animate-slide-up bg-white',
-      )}
-      style={{ animationDelay: `${index * 30}ms`, animationFillMode: 'both' }}
-    >
-      {/* Header row */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-4 py-3.5 hover:dark:bg-dark-800 bg-zinc-50 transition-colors text-left"
-      >
+    <div className={clsx('border rounded-xl overflow-hidden animate-slide-up',
+      isDark ? 'border-white/5 bg-dark-900' : 'border-zinc-200 bg-white')}
+      style={{ animationDelay: `${index * 30}ms`, animationFillMode: 'both' }}>
+      <button onClick={() => setOpen(v => !v)}
+        className={clsx('w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors',
+          isDark ? 'hover:bg-dark-800' : 'hover:bg-zinc-50')}>
         <span className={clsx('w-2 h-2 rounded-full shrink-0', meta.dot)} />
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-semibold dark:text-zinc-200 text-zinc-700">{fmtDateShort(record.date)}</span>
+          <span className={clsx('text-sm font-semibold', isDark ? 'text-zinc-200' : 'text-zinc-800')}>{fmtDateShort(record.date)}</span>
         </div>
-        <span className={clsx('text-xs font-semibold px-2.5 py-1 rounded-full border', meta.bg, meta.color)}>
-          {meta.label}
-        </span>
+        <span className={clsx('text-xs font-semibold px-2.5 py-1 rounded-full border', meta.bg, meta.color)}>{meta.label}</span>
         {record.markedAt && (
-          <span className="text-xs dark:text-zinc-500 text-zinc-400 hidden sm:block">{fmtTime(record.markedAt)}</span>
+          <span className={clsx('text-xs hidden sm:block', isDark ? 'text-zinc-500' : 'text-zinc-400')}>{fmtTime(record.markedAt)}</span>
         )}
-        {open ? <ChevronUp size={15} className="dark:text-zinc-500 text-zinc-400 shrink-0" /> : <ChevronDown size={15} className="dark:text-zinc-500 text-zinc-400 shrink-0" />}
+        {open ? <ChevronUp size={14} className={isDark ? 'text-zinc-500' : 'text-zinc-400'} /> : <ChevronDown size={14} className={isDark ? 'text-zinc-500' : 'text-zinc-400'} />}
       </button>
-
-      {/* Expanded detail */}
       {open && (
-        <div className="border-t border-slate-100 px-4 py-4 dark:bg-dark-800 bg-zinc-50/50 grid grid-cols-2 gap-3 text-xs">
+        <div className={clsx('border-t px-4 py-4 grid grid-cols-2 gap-3 text-xs',
+          isDark ? 'border-white/5 bg-dark-800' : 'border-zinc-100 bg-zinc-50')}>
           {[
-            { label: 'Date', value: fmtDate(record.date) },
-            { label: 'Status', value: meta.label },
-            { label: 'Marked At', value: record.markedAt ? fmtTime(record.markedAt) : 'â€”' },
-            { label: 'Location', value: record.locationType === 'VERIFIED' ? 'Verified âœ“' : 'Unverified' },
-            { label: 'Distance', value: record.distanceFromHostel != null ? `${record.distanceFromHostel} m` : 'â€”' },
-            {
-              label: 'Window',
-              value: record.window ? `${record.window.startTime} â€“ ${record.window.endTime}` : 'â€”',
-            },
-            ...(record.isSpecialWindow ? [{ label: 'Special Timing', value: record.specialWindowReason ?? 'Yes' }] : []),
-            ...(record.excuseReason ? [{ label: 'Excuse Reason', value: record.excuseReason }] : []),
-            ...(record.photoUrl ? [{ label: 'Photo', value: 'Captured âœ“' }] : []),
+            { label: 'Date',     value: fmtDate(record.date) },
+            { label: 'Status',   value: meta.label },
+            { label: 'Time',     value: record.markedAt ? fmtTime(record.markedAt) : '—' },
+            { label: 'Location', value: record.locationType === 'VERIFIED' ? 'Verified ✓' : 'Unverified' },
+            { label: 'Distance', value: record.distanceFromHostel != null ? `${record.distanceFromHostel} m` : '—' },
+            { label: 'Window',   value: record.window ? `${record.window.startTime} – ${record.window.endTime}` : '—' },
+            ...(record.isSpecialWindow ? [{ label: 'Special', value: record.specialWindowReason ?? 'Yes' }] : []),
+            ...(record.photoUrl ? [{ label: 'Photo', value: 'Captured ✓' }] : []),
           ].map(({ label, value }) => (
             <div key={label} className="flex flex-col gap-0.5">
-              <span className="dark:text-zinc-500 text-zinc-400 uppercase tracking-wide font-medium text-[10px]">{label}</span>
-              <span className="dark:text-zinc-200 text-zinc-700 font-semibold">{value}</span>
+              <span className={clsx('text-[10px] uppercase tracking-wide', isDark ? 'text-zinc-500' : 'text-zinc-400')}>{label}</span>
+              <span className={clsx('font-semibold', isDark ? 'text-zinc-200' : 'text-zinc-700')}>{value}</span>
             </div>
           ))}
         </div>
@@ -513,16 +390,13 @@ function HistoryRow({ record, index }: { record: AttendanceRecord; index: number
   )
 }
 
-/** Attendance percentage ring + stats */
-function PercentageCard({
-  summary,
-}: {
-  summary: ReturnType<typeof useAttendance>['summary']
-}) {
+// Fix 8: stats show only Present, Late, Absent (no Excused/Special)
+function PercentageCard({ summary }: { summary: ReturnType<typeof useAttendance>['summary'] }) {
+  const { isDark } = useTheme()
   if (!summary) return (
-    <div className="dark:bg-dark-900 bg-white rounded-2xl  border dark:border-white/5 border-zinc-200 p-5 animate-pulse">
-      <div className="h-4 dark:bg-dark-700 bg-zinc-100 rounded w-1/3 mb-3" />
-      <div className="h-20 dark:bg-dark-700 bg-zinc-100 rounded" />
+    <div className={clsx('rounded-2xl border p-5 animate-pulse', isDark ? 'bg-dark-900 border-white/5' : 'bg-white border-zinc-200')}>
+      <div className={clsx('h-4 rounded w-1/3 mb-3', isDark ? 'bg-dark-700' : 'bg-zinc-100')} />
+      <div className={clsx('h-20 rounded', isDark ? 'bg-dark-700' : 'bg-zinc-100')} />
     </div>
   )
 
@@ -530,92 +404,82 @@ function PercentageCard({
   const circumference = 2 * Math.PI * 44
   const offset = circumference - (pct / 100) * circumference
 
+  // Only Present, Late, Absent — no Excused/Special per spec
   const stats = [
-    { label: 'Present', value: summary.presentDays, color: 'text-emerald-600' },
-    { label: 'Late', value: summary.lateDays, color: 'text-amber-600' },
-    { label: 'Absent', value: summary.absentDays, color: 'text-red-500' },
-    { label: 'Excused', value: summary.excusedDays, color: 'text-blue-500' },
+    { label: 'Present', value: summary.presentDays, color: 'text-emerald-500' },
+    { label: 'Late',    value: summary.lateDays,    color: 'text-amber-500'   },
+    { label: 'Absent',  value: summary.absentDays,  color: 'text-red-500'    },
   ]
 
   return (
-    <div className="dark:bg-dark-900 bg-white rounded-2xl  border dark:border-white/5 border-zinc-200 p-5">
-      <h3 className="text-sm font-bold dark:text-zinc-200 text-zinc-700 mb-4 flex items-center gap-2">
-        <TrendingUp size={15} className="text-accent-400" /> Attendance Summary
+    <div className={clsx('rounded-2xl border p-5', isDark ? 'bg-dark-900 border-white/5' : 'bg-white border-zinc-200')}>
+      <h3 className={clsx('text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2', isDark ? 'text-zinc-400' : 'text-zinc-500')}>
+        <TrendingUp size={13} className="text-accent-400" /> Attendance Summary
       </h3>
       <div className="flex items-center gap-6">
-        {/* SVG ring */}
         <div className="relative shrink-0">
           <svg width="100" height="100" className="-rotate-90">
-            <circle cx="50" cy="50" r="44" fill="none" stroke="#e2e8f0" strokeWidth="10" />
-            <circle
-              cx="50" cy="50" r="44"
-              fill="none"
+            <circle cx="50" cy="50" r="44" fill="none" strokeWidth="8"
+              className={isDark ? 'stroke-white/8' : 'stroke-zinc-100'} />
+            <circle cx="50" cy="50" r="44" fill="none" strokeWidth="8"
               stroke={pct >= 75 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444'}
-              strokeWidth="10"
-              strokeDasharray={circumference}
-              strokeDashoffset={offset}
-              strokeLinecap="round"
-              style={{ transition: 'stroke-dashoffset 1s ease-out' }}
-            />
+              strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round"
+              style={{ transition: 'stroke-dashoffset 1s ease-out' }} />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-xl font-extrabold dark:text-zinc-100 text-zinc-900">{pct}%</span>
-            <span className="text-[10px] dark:text-zinc-500 text-zinc-400 font-medium">Overall</span>
+            <span className={clsx('text-xl font-extrabold', isDark ? 'text-white' : 'text-zinc-900')}>{pct}%</span>
+            <span className={clsx('text-[10px]', isDark ? 'text-zinc-500' : 'text-zinc-400')}>Overall</span>
           </div>
         </div>
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 gap-3 flex-1">
+        <div className="grid grid-cols-3 gap-2 flex-1">
           {stats.map(({ label, value, color }) => (
-            <div key={label} className="dark:bg-dark-800 bg-zinc-50 rounded-xl p-2.5 text-center">
-              <p className={clsx('text-lg font-bold', color)}>{value}</p>
-              <p className="text-[11px] dark:text-zinc-500 text-zinc-400 font-medium">{label}</p>
+            <div key={label} className={clsx('rounded-xl p-2.5 text-center', isDark ? 'bg-dark-800' : 'bg-zinc-50')}>
+              <p className={clsx('text-xl font-bold', color)}>{value}</p>
+              <p className={clsx('text-[10px] font-medium', isDark ? 'text-zinc-500' : 'text-zinc-400')}>{label}</p>
             </div>
           ))}
         </div>
       </div>
-      <div className="mt-3 dark:bg-dark-800 bg-zinc-50 rounded-xl px-3 py-2 text-center">
-        <span className="text-xs dark:text-zinc-500 text-zinc-400">Total recorded days: </span>
-        <span className="text-xs font-bold dark:text-zinc-200 text-zinc-700">{summary.totalDays}</span>
+      <div className={clsx('mt-3 rounded-xl px-3 py-2 text-center', isDark ? 'bg-dark-800' : 'bg-zinc-50')}>
+        <span className={clsx('text-xs', isDark ? 'text-zinc-500' : 'text-zinc-400')}>Total days: </span>
+        <span className={clsx('text-xs font-bold', isDark ? 'text-zinc-200' : 'text-zinc-700')}>{summary.totalDays}</span>
       </div>
     </div>
   )
 }
 
-/** Animated bar chart â€” weekly or monthly toggle */
-function AttendanceChart({
-  summary,
-}: {
-  summary: ReturnType<typeof useAttendance>['summary']
-}) {
+function AttendanceChart({ summary }: { summary: ReturnType<typeof useAttendance>['summary'] }) {
   const [view, setView] = useState<'weekly' | 'monthly'>('weekly')
+  const { isDark } = useTheme()
 
   if (!summary) return (
-    <div className="dark:bg-dark-900 bg-white rounded-2xl  border dark:border-white/5 border-zinc-200 p-5 animate-pulse">
-      <div className="h-4 dark:bg-dark-700 bg-zinc-100 rounded w-1/3 mb-3" />
-      <div className="h-36 dark:bg-dark-700 bg-zinc-100 rounded" />
+    <div className={clsx('rounded-2xl border p-5 animate-pulse', isDark ? 'bg-dark-900 border-white/5' : 'bg-white border-zinc-200')}>
+      <div className={clsx('h-4 rounded w-1/3 mb-3', isDark ? 'bg-dark-700' : 'bg-zinc-100')} />
+      <div className={clsx('h-36 rounded', isDark ? 'bg-dark-700' : 'bg-zinc-100')} />
     </div>
   )
 
+  // Only Present and Absent — no Excused/Special
   const data = view === 'weekly'
-    ? summary.weeklyData.slice(-6).map((w) => ({ name: w.week, Present: w.present, Absent: w.absent }))
-    : summary.monthlyData.map((m) => ({ name: m.month, Present: m.present, Absent: m.absent }))
+    ? summary.weeklyData.slice(-6).map(w => ({ name: w.week, Present: w.present, Absent: w.absent }))
+    : summary.monthlyData.map(m => ({ name: m.month, Present: m.present, Absent: m.absent }))
+
+  const tooltip = { borderRadius: '8px', border: 'none', fontSize: '12px',
+    background: isDark ? '#18191f' : '#fff', color: isDark ? '#f4f4f5' : '#09090b' }
 
   return (
-    <div className="dark:bg-dark-900 bg-white rounded-2xl  border dark:border-white/5 border-zinc-200 p-5">
+    <div className={clsx('rounded-2xl border p-5', isDark ? 'bg-dark-900 border-white/5' : 'bg-white border-zinc-200')}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold dark:text-zinc-200 text-zinc-700 flex items-center gap-2">
-          <BarChart2 size={15} className="text-accent-400" /> Attendance Chart
+        <h3 className={clsx('text-xs font-bold uppercase tracking-widest flex items-center gap-2', isDark ? 'text-zinc-400' : 'text-zinc-500')}>
+          <BarChart2 size={13} className="text-accent-400" /> Attendance Chart
         </h3>
-        <div className="flex dark:bg-dark-700 bg-zinc-100 rounded-lg p-0.5">
-          {(['weekly', 'monthly'] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={clsx(
-                'px-3 py-1 text-xs font-semibold rounded-md transition-all',
-                view === v ? 'bg-white dark:text-zinc-100 text-zinc-900 shadow-sm' : 'dark:text-zinc-400 text-zinc-500 hover:dark:text-zinc-200 text-zinc-700'
-              )}
-            >
+        <div className={clsx('flex rounded-lg p-0.5', isDark ? 'bg-dark-700' : 'bg-zinc-100')}>
+          {(['weekly', 'monthly'] as const).map(v => (
+            <button key={v} onClick={() => setView(v)}
+              className={clsx('px-3 py-1 text-xs font-semibold rounded-md transition-all',
+                view === v
+                  ? isDark ? 'bg-dark-600 text-zinc-100 shadow-sm' : 'bg-white text-zinc-900 shadow-sm'
+                  : isDark ? 'text-zinc-400' : 'text-zinc-500')}>
               {v === 'weekly' ? 'Weekly' : 'Monthly'}
             </button>
           ))}
@@ -623,24 +487,21 @@ function AttendanceChart({
       </div>
       <ResponsiveContainer width="100%" height={160}>
         <BarChart data={data} barCategoryGap="30%" barGap={4}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-          <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
-          <Tooltip
-            contentStyle={{ borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}
-            cursor={{ fill: 'rgba(0,0,0,0.03)' }}
-          />
-          <Bar dataKey="Present" radius={[4, 4, 0, 0]}>
+          <CartesianGrid strokeDasharray="3 3" stroke={isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9'} vertical={false} />
+          <XAxis dataKey="name" tick={{ fontSize: 10, fill: isDark ? '#52525b' : '#94a3b8' }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: isDark ? '#52525b' : '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
+          <Tooltip contentStyle={tooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+          <Bar dataKey="Present" radius={[4,4,0,0]}>
             {data.map((_, i) => <Cell key={i} fill="#10b981" />)}
           </Bar>
-          <Bar dataKey="Absent" radius={[4, 4, 0, 0]}>
-            {data.map((_, i) => <Cell key={i} fill="#fca5a5" />)}
+          <Bar dataKey="Absent" radius={[4,4,0,0]}>
+            {data.map((_, i) => <Cell key={i} fill="#ef4444" fillOpacity={0.6} />)}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
       <div className="flex items-center gap-4 mt-2 justify-center">
-        {[{ color: 'bg-emerald-500', label: 'Present' }, { color: 'bg-red-300', label: 'Absent' }].map(({ color, label }) => (
-          <div key={label} className="flex items-center gap-1.5 text-xs dark:text-zinc-400 text-zinc-500">
+        {[{ color: 'bg-emerald-500', label: 'Present' }, { color: 'bg-red-400', label: 'Absent' }].map(({ color, label }) => (
+          <div key={label} className={clsx('flex items-center gap-1.5 text-xs', isDark ? 'text-zinc-400' : 'text-zinc-500')}>
             <span className={clsx('w-2.5 h-2.5 rounded-sm', color)} />{label}
           </div>
         ))}
@@ -649,207 +510,178 @@ function AttendanceChart({
   )
 }
 
-// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function StudentAttendancePage() {
   const {
     status, statusLoading, statusError, fetchStatus,
-    currentTime,
-    location, requestLocation,
+    currentTime, location, requestLocation,
     cameraState, setCameraState,
     capturedPhoto, setPhoto, retakePhoto,
     canOpenCamera,
     submitAttendance, submitError, submitSuccess,
-    summary,
-    history, historyTotal, historyPage, historyLoading, loadHistory,
+    summary, history, historyTotal, historyPage, historyLoading, loadHistory,
   } = useAttendance()
-
+  const { isDark } = useTheme()
   const [activeTab, setActiveTab] = useState<'mark' | 'history' | 'stats'>('mark')
-
   const { allowed: canOpen, reason: canOpenReason } = canOpenCamera()
 
-  // Auto-request location when window is open
   useEffect(() => {
-    if (
-      status?.windowState === 'OPEN' &&
-      location.permission === 'unknown' &&
-      !location.checking
-    ) {
+    if (status?.windowState === 'OPEN' && location.permission === 'unknown' && !location.checking) {
       requestLocation()
     }
   }, [status?.windowState, location.permission, location.checking, requestLocation])
 
-  // â”€â”€ Loading state â”€â”€
-  if (statusLoading) {
-    return (
-      <div className="max-w-2xl mx-auto space-y-4 animate-pulse pt-2">
-        <div className="h-24 dark:bg-dark-700 bg-zinc-100 rounded-2xl" />
-        <div className="h-20 dark:bg-dark-700 bg-zinc-100 rounded-2xl" />
-        <div className="h-20 dark:bg-dark-700 bg-zinc-100 rounded-2xl" />
-        <div className="h-44 dark:bg-dark-700 bg-zinc-100 rounded-2xl" />
-      </div>
-    )
-  }
+  if (statusLoading) return (
+    <div className="max-w-4xl mx-auto space-y-4 animate-pulse pt-2">
+      {[1,2,3].map(i => <div key={i} className={clsx('h-24 rounded-2xl', isDark ? 'bg-dark-700' : 'bg-zinc-100')} />)}
+    </div>
+  )
 
   return (
-    <div className="max-w-2xl mx-auto animate-fade-in">
-      {/* Page header */}
+    <div className="max-w-4xl mx-auto animate-fade-in">
+      {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-accent-600/15 flex items-center justify-center">
-            <CalendarCheck size={20} className="text-accent-400" />
+          <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center',
+            isDark ? 'bg-accent-600/15 border border-accent-600/20' : 'bg-blue-50 border border-blue-200')}>
+            <CalendarCheck size={18} className={isDark ? 'text-accent-400' : 'text-blue-600'} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold dark:text-zinc-100 text-zinc-900">Attendance</h1>
-            <p className="text-sm dark:text-zinc-500 text-zinc-400">Mark and track your daily attendance</p>
+            <h1 className={clsx('text-2xl font-bold font-display', isDark ? 'text-white' : 'text-zinc-900')}>Attendance</h1>
+            <p className={clsx('text-xs', isDark ? 'text-zinc-500' : 'text-zinc-400')}>Daily hostel attendance — 8:30 PM – 8:40 PM</p>
           </div>
         </div>
-        <button
-          onClick={fetchStatus}
-          className="p-2 rounded-xl dark:text-zinc-500 text-zinc-400 hover:dark:text-zinc-300 text-zinc-600 hover:dark:bg-dark-700 bg-zinc-100 transition-colors"
-          title="Refresh"
-        >
+        <button onClick={fetchStatus}
+          className={clsx('p-2 rounded-xl transition-colors', isDark ? 'text-zinc-500 hover:text-zinc-300 hover:bg-dark-700' : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100')}>
           <RefreshCw size={16} />
         </button>
       </div>
 
-      {/* Server error banner */}
+      {/* Server error */}
       {statusError && (
-        <div className="flex items-start gap-2.5 bg-red-50 border border-red-100 text-red-700 rounded-xl p-3.5 mb-4 text-sm">
-          <AlertCircle size={15} className="shrink-0 mt-0.5" />
-          <span>{statusError}</span>
+        <div className="flex items-start gap-2.5 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl p-3.5 mb-4 text-sm">
+          <AlertCircle size={15} className="shrink-0 mt-0.5" /> {statusError}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex dark:bg-dark-700 bg-zinc-100 rounded-xl p-1 mb-5">
+      <div className={clsx('flex rounded-xl p-1 mb-5', isDark ? 'bg-dark-700' : 'bg-zinc-100')}>
         {([
-          { id: 'mark', label: 'Mark', icon: Camera },
-          { id: 'history', label: 'History', icon: Calendar },
-          { id: 'stats', label: 'Statistics', icon: BarChart2 },
+          { id: 'mark',    label: 'Mark',       icon: Camera },
+          { id: 'history', label: 'History',    icon: Calendar },
+          { id: 'stats',   label: 'Statistics', icon: BarChart2 },
         ] as const).map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={clsx(
-              'flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-lg transition-all',
+          <button key={id} onClick={() => setActiveTab(id)}
+            className={clsx('flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-lg transition-all',
               activeTab === id
-                ? 'bg-white dark:text-zinc-100 text-zinc-900 shadow-sm'
-                : 'dark:text-zinc-400 text-zinc-500 hover:dark:text-zinc-200 text-zinc-700'
-            )}
-          >
+                ? isDark ? 'bg-dark-600 text-zinc-100 shadow-sm' : 'bg-white text-zinc-900 shadow-sm'
+                : isDark ? 'text-zinc-400 hover:text-zinc-200' : 'text-zinc-500 hover:text-zinc-700')}>
             <Icon size={14} /> {label}
           </button>
         ))}
       </div>
 
-      {/* â”€â”€ MARK TAB â”€â”€ */}
+      {/* ── MARK TAB: two-column layout ── */}
       {activeTab === 'mark' && (
         <div className="space-y-4">
-          {/* Date/time */}
           <DateTimeBanner currentTime={currentTime} />
 
           {/* Special timing notice */}
           {status?.window?.isSpecial && (
-            <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/25 rounded-xl p-4">
+              <Info size={15} className="text-amber-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-bold text-amber-800">Attendance Time Updated</p>
-                <p className="text-xs text-amber-700 mt-0.5">
-                  Your attendance timing for today has been updated to{' '}
-                  <strong>{status.window.startTime} â€“ {status.window.endTime} IST</strong>.
+                <p className="text-sm font-bold text-amber-300">Attendance Time Updated</p>
+                <p className="text-xs text-amber-400 mt-0.5">
+                  Updated to <strong className="font-mono">{status.window.startTime} – {status.window.endTime} IST</strong>
+                  {status.window.reason && ` · ${status.window.reason}`}
                 </p>
-                {status.window.reason && (
-                  <p className="text-xs text-amber-600 mt-0.5">Reason: {status.window.reason}</p>
-                )}
               </div>
             </div>
           )}
 
-          {/* Window status */}
-          <WindowCard windowState={status?.windowState} window={status?.window} />
+          {/* Two-column layout: left = info, right = camera */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* LEFT — Window + Location */}
+            <div className="space-y-4">
+              <WindowCard windowState={status?.windowState} window={status?.window} />
+              <LocationCard location={location} onRequest={requestLocation} />
 
-          {/* Location */}
-          <LocationCard location={location} onRequest={requestLocation} />
-
-          {/* Camera / submit */}
-          <div>
-            <p className="text-xs font-semibold dark:text-zinc-400 text-zinc-500 uppercase tracking-wide mb-2">Camera</p>
-            <CameraSection
-              cameraState={cameraState}
-              capturedPhoto={capturedPhoto}
-              canOpen={canOpen}
-              canOpenReason={canOpenReason}
-              onOpenCamera={() => setCameraState('capturing')}
-              onCapture={setPhoto}
-              onRetake={retakePhoto}
-              onSubmit={submitAttendance}
-              submitError={submitError}
-              submitSuccess={submitSuccess}
-              setCameraState={setCameraState}
-            />
-          </div>
-
-          {/* Already marked â€” show today's record */}
-          {status?.alreadyMarked && status.todayRecord && cameraState !== 'done' && !submitSuccess && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
-              <p className="text-sm font-bold text-emerald-800 flex items-center gap-2 mb-3">
-                <CheckCircle2 size={16} /> Attendance Marked Today
-              </p>
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                {[
-                  { label: 'Status', value: STATUS_META[status.todayRecord.status]?.label ?? status.todayRecord.status },
-                  { label: 'Time', value: fmtTime(status.todayRecord.markedAt) },
-                  { label: 'Location', value: status.todayRecord.locationType === 'VERIFIED' ? 'Verified âœ“' : 'Unverified' },
-                  { label: 'Distance', value: status.todayRecord.distanceFromHostel != null ? `${status.todayRecord.distanceFromHostel} m` : 'â€”' },
-                ].map(({ label, value }) => (
-                  <div key={label} className="bg-white rounded-lg px-3 py-2 border border-emerald-100">
-                    <p className="text-[10px] dark:text-zinc-500 text-zinc-400 uppercase tracking-wide">{label}</p>
-                    <p className="font-semibold dark:text-zinc-200 text-zinc-700 mt-0.5">{value}</p>
+              {/* Today's record (if already marked) */}
+              {status?.alreadyMarked && status.todayRecord && !submitSuccess && (
+                <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/25 p-4">
+                  <p className="text-sm font-bold text-emerald-400 flex items-center gap-2 mb-3">
+                    <CheckCircle2 size={15} /> Attendance Marked Today
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {[
+                      { label: 'Status',   value: STATUS_META[status.todayRecord.status]?.label ?? status.todayRecord.status },
+                      { label: 'Time',     value: fmtTime(status.todayRecord.markedAt) },
+                      { label: 'Location', value: status.todayRecord.locationType === 'VERIFIED' ? 'Verified ✓' : 'Unverified' },
+                      { label: 'Distance', value: status.todayRecord.distanceFromHostel != null ? `${status.todayRecord.distanceFromHostel} m` : '—' },
+                    ].map(({ label, value }) => (
+                      <div key={label} className={clsx('rounded-lg px-3 py-2 border', isDark ? 'bg-dark-800 border-white/5' : 'bg-white border-emerald-100')}>
+                        <p className={clsx('text-[10px] uppercase tracking-wide', isDark ? 'text-zinc-500' : 'text-zinc-400')}>{label}</p>
+                        <p className={clsx('font-semibold mt-0.5', isDark ? 'text-zinc-200' : 'text-zinc-700')}>{value}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT — Camera */}
+            <div className="flex flex-col">
+              <p className={clsx('text-[10px] font-bold uppercase tracking-widest mb-2', isDark ? 'text-zinc-500' : 'text-zinc-400')}>
+                Camera
+              </p>
+              <div className="flex-1">
+                <CameraPanel
+                  cameraState={cameraState}
+                  capturedPhoto={capturedPhoto}
+                  canOpen={canOpen}
+                  canOpenReason={canOpenReason}
+                  onOpenCamera={() => setCameraState('capturing')}
+                  onCapture={setPhoto}
+                  onRetake={retakePhoto}
+                  onSubmit={submitAttendance}
+                  submitError={submitError}
+                  submitSuccess={submitSuccess}
+                  setCameraState={setCameraState}
+                />
               </div>
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      {/* â”€â”€ HISTORY TAB â”€â”€ */}
+      {/* ── HISTORY TAB ── */}
       {activeTab === 'history' && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm dark:text-zinc-400 text-zinc-500">
-              Showing <span className="font-semibold dark:text-zinc-200 text-zinc-700">{history.length}</span> of{' '}
-              <span className="font-semibold dark:text-zinc-200 text-zinc-700">{historyTotal}</span> days
-            </p>
-          </div>
-
+          <p className={clsx('text-xs', isDark ? 'text-zinc-500' : 'text-zinc-400')}>
+            Showing <span className={clsx('font-semibold', isDark ? 'text-zinc-300' : 'text-zinc-700')}>{history.length}</span> of{' '}
+            <span className={clsx('font-semibold', isDark ? 'text-zinc-300' : 'text-zinc-700')}>{historyTotal}</span> days
+          </p>
           {historyLoading && history.length === 0 ? (
             <div className="space-y-2">
-              {[1,2,3,4,5].map(i => (
-                <div key={i} className="h-14 dark:bg-dark-700 bg-zinc-100 rounded-xl animate-pulse" />
-              ))}
+              {[1,2,3,4,5].map(i => <div key={i} className={clsx('h-14 rounded-xl animate-pulse', isDark ? 'bg-dark-700' : 'bg-zinc-100')} />)}
             </div>
           ) : history.length === 0 ? (
-            <div className="dark:bg-dark-900 bg-white rounded-2xl  border dark:border-white/5 border-zinc-200 p-12 text-center">
-              <CalendarCheck size={36} className="text-slate-200 mx-auto mb-3" />
-              <p className="text-sm font-semibold dark:text-zinc-400 text-zinc-500">No attendance records yet</p>
-              <p className="text-xs dark:text-zinc-500 text-zinc-400 mt-1">Your attendance history will appear here</p>
+            <div className={clsx('rounded-2xl border p-12 text-center', isDark ? 'bg-dark-900 border-white/5' : 'bg-white border-zinc-200')}>
+              <CalendarCheck size={36} className={clsx('mx-auto mb-3', isDark ? 'text-zinc-700' : 'text-zinc-300')} />
+              <p className={clsx('text-sm font-semibold', isDark ? 'text-zinc-500' : 'text-zinc-500')}>No attendance records yet</p>
             </div>
           ) : (
             <>
               <div className="space-y-2">
-                {history.map((record, i) => (
-                  <HistoryRow key={record.id} record={record} index={i} />
-                ))}
+                {history.map((r, i) => <HistoryRow key={r.id} record={r} index={i} />)}
               </div>
               {history.length < historyTotal && (
-                <button
-                  onClick={() => loadHistory(historyPage + 1)}
-                  disabled={historyLoading}
-                  className="w-full py-2.5 border dark:border-white/8 border-zinc-200 rounded-xl text-sm font-medium dark:text-zinc-300 text-zinc-600 hover:dark:bg-dark-800 bg-zinc-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {historyLoading ? <><Loader2 size={14} className="animate-spin" /> Loadingâ€¦</> : 'Load more'}
+                <button onClick={() => loadHistory(historyPage + 1)} disabled={historyLoading}
+                  className={clsx('w-full py-2.5 border rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2',
+                    isDark ? 'border-white/8 text-zinc-300 hover:bg-dark-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50')}>
+                  {historyLoading ? <><Loader2 size={14} className="animate-spin" /> Loading…</> : 'Load more'}
                 </button>
               )}
             </>
@@ -857,38 +689,13 @@ export default function StudentAttendancePage() {
         </div>
       )}
 
-      {/* â”€â”€ STATS TAB â”€â”€ */}
+      {/* ── STATS TAB ── */}
       {activeTab === 'stats' && (
         <div className="space-y-4">
           <PercentageCard summary={summary} />
           <AttendanceChart summary={summary} />
-
-          {/* Status legend */}
-          <div className="dark:bg-dark-900 bg-white rounded-2xl  border dark:border-white/5 border-zinc-200 p-5">
-            <h3 className="text-sm font-bold dark:text-zinc-200 text-zinc-700 mb-3 flex items-center gap-2">
-              <Info size={14} className="text-accent-400" /> Status Guide
-            </h3>
-            <div className="space-y-2">
-              {Object.entries(STATUS_META).map(([key, meta]) => (
-                <div key={key} className="flex items-center gap-3">
-                  <span className={clsx('w-2 h-2 rounded-full shrink-0', meta.dot)} />
-                  <span className={clsx('text-xs font-semibold px-2 py-0.5 rounded-full border', meta.bg, meta.color)}>
-                    {meta.label}
-                  </span>
-                  <span className="text-xs dark:text-zinc-500 text-zinc-400">
-                    {key === 'PRESENT' && 'Marked within the normal window (8:30â€“8:40 PM)'}
-                    {key === 'LATE_PRESENT' && 'Marked via a special late-return window approved by Warden'}
-                    {key === 'ABSENT' && 'No attendance marked for that day'}
-                    {key === 'EXCUSED' && 'Absence excused by Warden or Admin'}
-                    {key === 'SPECIAL' && 'Other special attendance case'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       )}
     </div>
   )
 }
-

@@ -3,64 +3,91 @@ import {
   MessageSquarePlus, Plus, X, ChevronDown, ChevronUp,
   Clock, CheckCircle2, XCircle, Loader2, AlertCircle,
   Calendar, User, Hash, Building2, MapPin, Ban,
+  AlertTriangle, Star, Minus,
 } from 'lucide-react'
 import { studentService } from '@/services/studentService'
+import { useTheme } from '@/hooks/useTheme'
 import type { StudentRequest, RequestType, RequestStatus } from '@/types'
 import api from '@/services/api'
 import clsx from 'clsx'
 
-// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Request type groups ──────────────────────────────────────────────────────
+// Dropdown structure per spec:
+//   Emergency  → urgent, immediate
+//   Important  → important but not immediate
+//   Moderate   → normal + Other (sub-option under Moderate only)
 
-const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
-  GOING_HOME:     'Going Home',
-  OUTING:         'Outing',
-  LEAVE:          'Leave',
-  EMERGENCY_LEAVE:'Emergency Leave',
-  OTHER:          'Other',
+type RequestGroup = 'EMERGENCY' | 'IMPORTANT' | 'MODERATE'
+
+interface RequestOption {
+  value: RequestType
+  label: string
+  description: string
+  group: RequestGroup
 }
 
-// Types that require a destination
+const REQUEST_OPTIONS: RequestOption[] = [
+  // Emergency group
+  { value: 'EMERGENCY',      label: 'Emergency',          description: 'Medical or urgent personal emergency requiring immediate attention', group: 'EMERGENCY' },
+  // Important group
+  { value: 'IMPORTANT',      label: 'Important',          description: 'Important personal matter or permission request', group: 'IMPORTANT' },
+  { value: 'EMERGENCY_LEAVE',label: 'Emergency Leave',    description: 'Urgent leave for important family or personal matter', group: 'IMPORTANT' },
+  // Moderate group
+  { value: 'MODERATE',       label: 'Moderate',           description: 'Routine hostel-related request', group: 'MODERATE' },
+  { value: 'GOING_HOME',     label: 'Going Home',         description: 'Weekend or holiday visit home', group: 'MODERATE' },
+  { value: 'OUTING',         label: 'Outing',             description: 'Short outing — shopping, errands, etc.', group: 'MODERATE' },
+  { value: 'LEAVE',          label: 'Leave',              description: 'Planned leave from hostel', group: 'MODERATE' },
+  { value: 'OTHER',          label: 'Other',              description: 'Other moderate request not listed above', group: 'MODERATE' },
+]
+
+const GROUP_META: Record<RequestGroup, { label: string; icon: React.ElementType; accent: string; desc: string }> = {
+  EMERGENCY: { label: 'Emergency', icon: AlertTriangle, accent: '#ef4444', desc: 'Very urgent — requires immediate attention' },
+  IMPORTANT: { label: 'Important', icon: Star,          accent: '#f59e0b', desc: 'Important but not necessarily immediate' },
+  MODERATE:  { label: 'Moderate',  icon: Minus,         accent: '#3b6ef4', desc: 'Normal, non-urgent requests' },
+}
+
+const REQUEST_TYPE_LABELS: Record<string, string> = {
+  GOING_HOME: 'Going Home', OUTING: 'Outing', LEAVE: 'Leave',
+  EMERGENCY_LEAVE: 'Emergency Leave', OTHER: 'Other',
+  EMERGENCY: 'Emergency', IMPORTANT: 'Important', MODERATE: 'Moderate',
+}
+
 const DESTINATION_REQUIRED: RequestType[] = ['GOING_HOME', 'OUTING']
 
 const STATUS_META: Record<RequestStatus, { label: string; icon: React.ElementType; color: string; bg: string; dot: string }> = {
-  PENDING:   { label: 'Pending',   icon: Clock,         color: 'text-amber-700',   bg: 'bg-amber-50 border-amber-200',   dot: 'bg-amber-400'   },
-  APPROVED:  { label: 'Approved',  icon: CheckCircle2,  color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500' },
-  REJECTED:  { label: 'Rejected',  icon: XCircle,       color: 'text-red-700',     bg: 'bg-red-50 border-red-200',       dot: 'bg-red-500'     },
-  CANCELLED: { label: 'Cancelled', icon: Ban,           color: 'dark:text-zinc-300 text-zinc-600',   bg: 'dark:bg-dark-700 bg-zinc-100 dark:border-white/8 border-zinc-200',  dot: 'bg-slate-400'   },
+  PENDING:   { label: 'Pending',   icon: Clock,        color: 'text-amber-500',   bg: 'bg-amber-500/10 border-amber-500/20',   dot: 'bg-amber-400' },
+  APPROVED:  { label: 'Approved',  icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-500' },
+  REJECTED:  { label: 'Rejected',  icon: XCircle,      color: 'text-red-500',     bg: 'bg-red-500/10 border-red-500/20',       dot: 'bg-red-500' },
+  CANCELLED: { label: 'Cancelled', icon: Ban,          color: 'dark:text-zinc-400 text-zinc-500', bg: 'dark:bg-dark-700 dark:border-white/8 bg-zinc-100 border-zinc-200', dot: 'bg-zinc-400' },
 }
-
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  })
+  return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-// â”€â”€â”€ Student info strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Student info strip ───────────────────────────────────────────────────────
 
 interface StudentInfo { name: string; usn: string; floorNumber: string; roomNumber: string }
 
 function StudentInfoStrip({ info }: { info: StudentInfo }) {
+  const { isDark } = useTheme()
   return (
-    <div className="bg-accent-600/10 border border-accent-600/20 rounded-2xl px-5 py-4">
-      <p className="text-[10px] font-bold text-accent-400 uppercase tracking-widest mb-3">
-        Submitting as
-      </p>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div className={clsx('rounded-xl border px-4 py-3', isDark ? 'bg-accent-600/8 border-accent-600/20' : 'bg-blue-50 border-blue-200')}>
+      <p className="text-[10px] font-bold text-accent-400 uppercase tracking-widest mb-2">Submitting as</p>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {[
-          { icon: User,      label: 'Name',  value: info.name },
-          { icon: Hash,      label: 'USN',   value: info.usn },
+          { icon: User, label: 'Name', value: info.name },
+          { icon: Hash, label: 'USN', value: info.usn },
           { icon: Building2, label: 'Floor', value: info.floorNumber },
-          { icon: MapPin,    label: 'Room',  value: info.roomNumber },
+          { icon: MapPin, label: 'Room', value: info.roomNumber },
         ].map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-accent-600/15 flex items-center justify-center shrink-0">
-              <Icon size={13} className="text-accent-400" />
+            <div className="w-6 h-6 rounded-lg bg-accent-600/15 flex items-center justify-center shrink-0">
+              <Icon size={11} className="text-accent-400" />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] text-primary-400 uppercase tracking-wide font-medium">{label}</p>
-              <p className="text-xs font-bold text-primary-800 truncate">{value}</p>
+              <p className={clsx('text-[9px] uppercase tracking-wide', isDark ? 'text-zinc-500' : 'text-zinc-400')}>{label}</p>
+              <p className={clsx('text-xs font-bold truncate font-mono', isDark ? 'text-zinc-200' : 'text-zinc-800')}>{value}</p>
             </div>
           </div>
         ))}
@@ -69,17 +96,12 @@ function StudentInfoStrip({ info }: { info: StudentInfo }) {
   )
 }
 
-// â”€â”€â”€ Request card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Request card ──────────────────────────────────────────────────────────────
 
-function RequestCard({
-  req,
-  onCancel,
-}: {
-  req: StudentRequest
-  onCancel: (id: string) => void
-}) {
+function RequestCard({ req, onCancel }: { req: StudentRequest; onCancel: (id: string) => void }) {
   const [open, setOpen] = useState(false)
   const [cancelling, setCancelling] = useState(false)
+  const { isDark } = useTheme()
   const meta = STATUS_META[req.status] ?? STATUS_META.PENDING
   const Icon = meta.icon
 
@@ -87,84 +109,63 @@ function RequestCard({
     e.stopPropagation()
     if (!confirm('Cancel this request?')) return
     setCancelling(true)
-    try {
-      await api.patch(`/requests/${req.id}/cancel`)
-      onCancel(req.id)
-    } catch { /* error handled by parent refresh */ }
-    finally { setCancelling(false) }
+    try { await api.patch(`/requests/${req.id}/cancel`); onCancel(req.id) }
+    catch { /* silent */ } finally { setCancelling(false) }
   }
 
   return (
-    <div
-      className={clsx(
-        'dark:bg-dark-900 bg-white rounded-2xl border  overflow-hidden animate-slide-up transition-all',
-        req.status === 'APPROVED' ? 'border-emerald-200' :
-        req.status === 'REJECTED' ? 'border-red-200' :
-        req.status === 'CANCELLED' ? 'dark:border-white/8 border-zinc-200 opacity-70' :
-        'border-slate-100',
-      )}
-    >
-      {/* Header */}
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center gap-3 px-4 py-4 hover:dark:bg-dark-800 bg-zinc-50 transition-colors text-left"
-      >
+    <div className={clsx('rounded-2xl border overflow-hidden transition-all',
+      isDark ? 'bg-dark-900 border-white/5 hover:border-white/8' : 'bg-white border-zinc-200 hover:border-zinc-300')}>
+      <button onClick={() => setOpen(v => !v)}
+        className={clsx('w-full flex items-center gap-3 px-4 py-4 text-left transition-colors',
+          isDark ? 'hover:bg-dark-800' : 'hover:bg-zinc-50')}>
         <span className={clsx('w-2 h-2 rounded-full shrink-0', meta.dot)} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold dark:text-zinc-100 text-zinc-900">{REQUEST_TYPE_LABELS[req.type]}</p>
-          <p className="text-xs dark:text-zinc-500 text-zinc-400 mt-0.5">
-            {fmtDate(req.fromDate)} â€” {fmtDate(req.toDate)}
+          <p className={clsx('text-sm font-bold', isDark ? 'text-zinc-200' : 'text-zinc-800')}>
+            {REQUEST_TYPE_LABELS[req.type] ?? req.type}
+          </p>
+          <p className={clsx('text-xs mt-0.5', isDark ? 'text-zinc-500' : 'text-zinc-400')}>
+            {fmtDate(req.fromDate)} — {fmtDate(req.toDate)}
           </p>
         </div>
-        <span className={clsx(
-          'flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border shrink-0',
-          meta.bg, meta.color,
-        )}>
-          <Icon size={11} /> {meta.label}
+        <span className={clsx('flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border shrink-0', meta.bg, meta.color)}>
+          <Icon size={10} /> {meta.label}
         </span>
-        {open ? <ChevronUp size={15} className="dark:text-zinc-500 text-zinc-400 shrink-0" /> : <ChevronDown size={15} className="dark:text-zinc-500 text-zinc-400 shrink-0" />}
+        {open ? <ChevronUp size={14} className={isDark ? 'text-zinc-500' : 'text-zinc-400'} />
+               : <ChevronDown size={14} className={isDark ? 'text-zinc-500' : 'text-zinc-400'} />}
       </button>
 
-      {/* Expanded detail */}
       {open && (
-        <div className="border-t border-slate-100 px-4 py-4 dark:bg-dark-800 bg-zinc-50/50 space-y-3">
-          <div className="grid grid-cols-1 gap-2 text-sm">
-            <div>
-              <span className="text-[10px] dark:text-zinc-500 text-zinc-400 uppercase tracking-wide font-medium">Reason</span>
-              <p className="dark:text-zinc-200 text-zinc-700 mt-0.5">{req.reason}</p>
-            </div>
-            {req.destination && (
-              <div>
-                <span className="text-[10px] dark:text-zinc-500 text-zinc-400 uppercase tracking-wide font-medium">Destination</span>
-                <p className="dark:text-zinc-200 text-zinc-700 mt-0.5">{req.destination}</p>
-              </div>
-            )}
-            {req.additionalDetails && (
-              <div>
-                <span className="text-[10px] dark:text-zinc-500 text-zinc-400 uppercase tracking-wide font-medium">Additional Details</span>
-                <p className="dark:text-zinc-200 text-zinc-700 mt-0.5">{req.additionalDetails}</p>
-              </div>
-            )}
-            {req.reviewNote && (
-              <div className={clsx(
-                'rounded-xl px-3 py-2 text-xs',
-                req.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700',
-              )}>
-                <span className="font-bold">Warden note: </span>{req.reviewNote}
-              </div>
-            )}
+        <div className={clsx('border-t px-4 py-4 space-y-2', isDark ? 'border-white/5 bg-dark-800' : 'border-zinc-100 bg-zinc-50')}>
+          <div>
+            <p className={clsx('text-[10px] uppercase tracking-wide', isDark ? 'text-zinc-500' : 'text-zinc-400')}>Reason</p>
+            <p className={clsx('text-sm mt-0.5', isDark ? 'text-zinc-300' : 'text-zinc-700')}>{req.reason}</p>
           </div>
-
+          {req.destination && (
+            <div>
+              <p className={clsx('text-[10px] uppercase tracking-wide', isDark ? 'text-zinc-500' : 'text-zinc-400')}>Destination</p>
+              <p className={clsx('text-sm mt-0.5', isDark ? 'text-zinc-300' : 'text-zinc-700')}>{req.destination}</p>
+            </div>
+          )}
+          {req.additionalDetails && (
+            <div>
+              <p className={clsx('text-[10px] uppercase tracking-wide', isDark ? 'text-zinc-500' : 'text-zinc-400')}>Additional Details</p>
+              <p className={clsx('text-sm mt-0.5', isDark ? 'text-zinc-300' : 'text-zinc-700')}>{req.additionalDetails}</p>
+            </div>
+          )}
+          {req.reviewNote && (
+            <div className={clsx('rounded-lg px-3 py-2 text-xs border', req.status === 'APPROVED' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400')}>
+              <strong>Warden note: </strong>{req.reviewNote}
+            </div>
+          )}
           <div className="flex items-center justify-between pt-1">
-            <p className="text-xs dark:text-zinc-500 text-zinc-400">Submitted: {fmtDate(req.createdAt)}</p>
+            <p className={clsx('text-xs', isDark ? 'text-zinc-600' : 'text-zinc-400')}>Submitted: {fmtDate(req.createdAt)}</p>
             {req.status === 'PENDING' && (
-              <button
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold dark:text-zinc-400 text-zinc-500 border dark:border-white/8 border-zinc-200 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50"
-              >
+              <button onClick={handleCancel} disabled={cancelling}
+                className={clsx('flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-50',
+                  isDark ? 'border-white/8 text-zinc-400 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/25' : 'border-zinc-200 text-zinc-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200')}>
                 {cancelling ? <Loader2 size={11} className="animate-spin" /> : <Ban size={11} />}
-                Cancel Request
+                Cancel
               </button>
             )}
           </div>
@@ -174,30 +175,34 @@ function RequestCard({
   )
 }
 
-// â”€â”€â”€ New request form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── New Request Form ──────────────────────────────────────────────────────────
 
-function NewRequestForm({
-  studentInfo,
-  onSuccess,
-  onCancel,
-}: {
-  studentInfo: StudentInfo | null
-  onSuccess: () => void
-  onCancel: () => void
+function NewRequestForm({ studentInfo, onSuccess, onCancel }: {
+  studentInfo: StudentInfo | null; onSuccess: () => void; onCancel: () => void
 }) {
-  const [type, setType]                         = useState<RequestType>('OUTING')
-  const [fromDate, setFromDate]                 = useState('')
-  const [toDate, setToDate]                     = useState('')
-  const [reason, setReason]                     = useState('')
-  const [destination, setDestination]           = useState('')
+  const { isDark } = useTheme()
+  const [selectedGroup, setSelectedGroup] = useState<RequestGroup>('MODERATE')
+  const [type, setType]                   = useState<RequestType>('MODERATE')
+  const [fromDate, setFromDate]           = useState('')
+  const [toDate, setToDate]               = useState('')
+  const [reason, setReason]               = useState('')
+  const [destination, setDestination]     = useState('')
   const [additionalDetails, setAdditionalDetails] = useState('')
-  const [loading, setLoading]                   = useState(false)
-  const [error, setError]                       = useState('')
+  const [loading, setLoading]             = useState(false)
+  const [error, setError]                 = useState('')
 
   const today = new Date().toISOString().split('T')[0]
   const destinationRequired = DESTINATION_REQUIRED.includes(type)
+  const optionsForGroup = REQUEST_OPTIONS.filter(o => o.group === selectedGroup)
 
-  // Clear destination when switching to a type that doesn't require it
+  // When group changes, auto-select first option in that group
+  function handleGroupChange(g: RequestGroup) {
+    setSelectedGroup(g)
+    setType(REQUEST_OPTIONS.find(o => o.group === g)!.value)
+    setDestination('')
+    setError('')
+  }
+
   useEffect(() => {
     if (!destinationRequired) setDestination('')
   }, [type, destinationRequired])
@@ -205,183 +210,147 @@ function NewRequestForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!fromDate)                              { setError('Please select a start date.'); return }
-    if (!toDate)                                { setError('Please select an end date.'); return }
-    if (new Date(toDate) < new Date(fromDate))  { setError('End date cannot be before start date.'); return }
-    if (reason.trim().length < 5)              { setError('Reason must be at least 5 characters.'); return }
+    if (!fromDate || !toDate) { setError('Please select dates.'); return }
+    if (new Date(toDate) < new Date(fromDate)) { setError('End date cannot be before start date.'); return }
+    if (reason.trim().length < 5) { setError('Please provide a reason (min 5 characters).'); return }
     if (destinationRequired && !destination.trim()) {
       setError(`Destination is required for ${REQUEST_TYPE_LABELS[type]}.`); return
     }
-
     setLoading(true)
     try {
       const res = await studentService.createRequest({
-        type,
-        fromDate,
-        toDate,
+        type, fromDate, toDate,
         reason: reason.trim(),
-        destination:       destination.trim()       || undefined,
+        destination: destination.trim() || undefined,
         additionalDetails: additionalDetails.trim() || undefined,
       })
-      if (res.success) {
-        onSuccess()
-      } else {
-        setError(res.message ?? 'Failed to submit request.')
-      }
+      if (res.success) onSuccess()
+      else setError(res.message ?? 'Failed to submit request.')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setError(msg ?? 'Failed to submit request. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+      setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to submit.')
+    } finally { setLoading(false) }
   }
 
+  const card = clsx('rounded-2xl border overflow-hidden',
+    isDark ? 'bg-dark-900 border-white/8' : 'bg-white border-zinc-200 shadow-[0_2px_8px_rgba(0,0,0,0.06)]')
+  const label = clsx('block text-xs font-semibold uppercase tracking-widest mb-1.5', isDark ? 'text-zinc-400' : 'text-zinc-500')
+  const input = clsx('input-dark w-full')
+
   return (
-    <div className="dark:bg-dark-900 bg-white rounded-2xl  border dark:border-white/5 border-zinc-200 overflow-hidden animate-slide-up">
-      {/* Header */}
-      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h2 className="text-base font-bold dark:text-zinc-100 text-zinc-900">New Request</h2>
-        <button
-          onClick={onCancel}
-          className="p-1.5 rounded-lg dark:text-zinc-500 text-zinc-400 hover:dark:bg-dark-700 bg-zinc-100 transition-colors"
-        >
+    <div className={card}>
+      <div className={clsx('px-5 py-4 border-b flex items-center justify-between', isDark ? 'border-white/5' : 'border-zinc-100')}>
+        <h2 className={clsx('text-base font-bold font-display', isDark ? 'text-white' : 'text-zinc-900')}>New Request</h2>
+        <button onClick={onCancel} className={clsx('p-1.5 rounded-lg transition-colors', isDark ? 'text-zinc-500 hover:bg-white/5' : 'text-zinc-400 hover:bg-zinc-100')}>
           <X size={16} />
         </button>
       </div>
 
       <div className="p-5 space-y-5">
-        {/* Student info â€” read-only */}
         {studentInfo && <StudentInfoStrip info={studentInfo} />}
 
-        {/* Error */}
         {error && (
-          <div className="flex items-start gap-2 bg-red-50 border border-red-100 text-red-700 rounded-xl p-3 text-sm">
+          <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl p-3 text-sm">
             <AlertCircle size={14} className="shrink-0 mt-0.5" /> {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Request type */}
+
+          {/* ── Step 1: Priority group ── */}
           <div>
-            <label className="text-xs font-semibold dark:text-zinc-300 text-zinc-600 uppercase tracking-wide block mb-2">
-              Request Type
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {(Object.keys(REQUEST_TYPE_LABELS) as RequestType[]).map(k => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setType(k)}
-                  className={clsx(
-                    'flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium text-left transition-all',
-                    type === k
-                      ? 'border-accent-500 bg-accent-600/10 text-accent-300'
-                      : 'dark:border-white/8 border-zinc-200 bg-white dark:text-zinc-300 text-zinc-600 hover:dark:bg-dark-800 bg-zinc-50',
-                  )}
-                >
-                  <span className={clsx('w-2 h-2 rounded-full shrink-0', type === k ? 'bg-accent-500' : 'bg-slate-300')} />
-                  {REQUEST_TYPE_LABELS[k]}
-                </button>
-              ))}
+            <label className={label}>Request Priority</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(Object.keys(GROUP_META) as RequestGroup[]).map(g => {
+                const m = GROUP_META[g]
+                const GIcon = m.icon
+                const active = selectedGroup === g
+                return (
+                  <button key={g} type="button" onClick={() => handleGroupChange(g)}
+                    className={clsx('flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all',
+                      active
+                        ? 'border-[color:var(--accent)] bg-[color:var(--accent-subtle)]'
+                        : isDark ? 'border-white/8 bg-dark-800 hover:border-white/15' : 'border-zinc-200 bg-zinc-50 hover:border-zinc-300'
+                    )}
+                    style={active ? { borderColor: m.accent, background: `${m.accent}12` } : {}}>
+                    <GIcon size={18} style={{ color: active ? m.accent : isDark ? '#52525b' : '#a1a1aa' }} />
+                    <span className={clsx('text-xs font-bold', active ? '' : isDark ? 'text-zinc-400' : 'text-zinc-500')}
+                      style={active ? { color: m.accent } : {}}>
+                      {m.label}
+                    </span>
+                    <span className={clsx('text-[9px] leading-tight hidden sm:block', isDark ? 'text-zinc-600' : 'text-zinc-400')}>
+                      {m.desc}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
+          </div>
+
+          {/* ── Step 2: Specific type dropdown (Moderate has Other) ── */}
+          <div>
+            <label className={label}>Request Type</label>
+            <select value={type} onChange={e => { setType(e.target.value as RequestType); setDestination('') }}
+              className={clsx('input-dark w-full cursor-pointer',
+                isDark ? 'bg-dark-800' : 'bg-white')}>
+              {optionsForGroup.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label} — {opt.description}</option>
+              ))}
+            </select>
           </div>
 
           {/* Dates */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold dark:text-zinc-300 text-zinc-600 uppercase tracking-wide block mb-1.5">
-                From Date <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="date"
-                value={fromDate}
-                min={today}
+              <label className={label}>From Date <span className="text-red-400">*</span></label>
+              <input type="date" value={fromDate} min={today}
                 onChange={e => { setFromDate(e.target.value); if (toDate && toDate < e.target.value) setToDate('') }}
-                className="w-full px-3 py-2.5 rounded-xl border dark:border-white/8 border-zinc-200 dark:bg-dark-800 bg-zinc-50 text-sm dark:text-zinc-100 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-primary-400"
-              />
+                className={input} />
             </div>
             <div>
-              <label className="text-xs font-semibold dark:text-zinc-300 text-zinc-600 uppercase tracking-wide block mb-1.5">
-                To Date <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="date"
-                value={toDate}
-                min={fromDate || today}
+              <label className={label}>To Date <span className="text-red-400">*</span></label>
+              <input type="date" value={toDate} min={fromDate || today}
                 onChange={e => setToDate(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border dark:border-white/8 border-zinc-200 dark:bg-dark-800 bg-zinc-50 text-sm dark:text-zinc-100 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-primary-400"
-              />
+                className={input} />
             </div>
           </div>
 
           {/* Destination */}
           <div>
-            <label className="text-xs font-semibold dark:text-zinc-300 text-zinc-600 uppercase tracking-wide block mb-1.5">
+            <label className={label}>
               Destination
-              {destinationRequired
-                ? <span className="text-red-400 ml-1">*</span>
-                : <span className="dark:text-zinc-500 text-zinc-400 font-normal ml-1">(optional)</span>
-              }
+              {destinationRequired ? <span className="text-red-400 ml-1">*</span> : <span className={clsx('ml-1 font-normal', isDark ? 'text-zinc-600' : 'text-zinc-400')}>(optional)</span>}
             </label>
-            <input
-              type="text"
-              value={destination}
-              onChange={e => setDestination(e.target.value)}
+            <input type="text" value={destination} onChange={e => setDestination(e.target.value)}
               placeholder={destinationRequired ? 'Where are you going? (required)' : 'Where are you going?'}
-              className={clsx(
-                'w-full px-3 py-2.5 rounded-xl border dark:bg-dark-800 bg-zinc-50 text-sm dark:text-zinc-100 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-primary-400',
-                destinationRequired ? 'border-accent-600/30' : 'dark:border-white/8 border-zinc-200',
-              )}
-            />
+              className={input} />
           </div>
 
           {/* Reason */}
           <div>
-            <label className="text-xs font-semibold dark:text-zinc-300 text-zinc-600 uppercase tracking-wide block mb-1.5">
-              Reason <span className="text-red-400">*</span>
-            </label>
-            <textarea
-              value={reason}
-              onChange={e => setReason(e.target.value)}
-              rows={3}
-              placeholder="Explain your reason clearly (min 5 characters)â€¦"
-              className="w-full px-3 py-2.5 rounded-xl border dark:border-white/8 border-zinc-200 dark:bg-dark-800 bg-zinc-50 text-sm dark:text-zinc-100 text-zinc-900 resize-none focus:outline-none focus:ring-2 focus:ring-primary-400"
-            />
-            <p className="text-[10px] dark:text-zinc-500 text-zinc-400 mt-1">{reason.trim().length}/500 characters</p>
+            <label className={label}>Reason <span className="text-red-400">*</span></label>
+            <textarea value={reason} onChange={e => setReason(e.target.value)} rows={3}
+              placeholder="Explain your reason clearly (min 5 characters)…"
+              className={clsx(input, 'resize-none')} />
+            <p className={clsx('text-[10px] mt-1', isDark ? 'text-zinc-600' : 'text-zinc-400')}>{reason.trim().length}/500</p>
           </div>
 
           {/* Additional details */}
           <div>
-            <label className="text-xs font-semibold dark:text-zinc-300 text-zinc-600 uppercase tracking-wide block mb-1.5">
-              Additional Details <span className="dark:text-zinc-500 text-zinc-400 font-normal">(optional)</span>
-            </label>
-            <textarea
-              value={additionalDetails}
-              onChange={e => setAdditionalDetails(e.target.value)}
-              rows={2}
-              placeholder="Any additional information for the Wardenâ€¦"
-              className="w-full px-3 py-2.5 rounded-xl border dark:border-white/8 border-zinc-200 dark:bg-dark-800 bg-zinc-50 text-sm dark:text-zinc-100 text-zinc-900 resize-none focus:outline-none focus:ring-2 focus:ring-primary-400"
-            />
+            <label className={label}>Additional Details <span className={clsx('font-normal', isDark ? 'text-zinc-600' : 'text-zinc-400')}>(optional)</span></label>
+            <textarea value={additionalDetails} onChange={e => setAdditionalDetails(e.target.value)} rows={2}
+              placeholder="Any extra information for the Warden…"
+              className={clsx(input, 'resize-none')} />
           </div>
 
-          {/* Actions */}
           <div className="flex gap-3 pt-1">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="flex-1 py-2.5 border dark:border-white/8 border-zinc-200 rounded-xl text-sm font-semibold dark:text-zinc-300 text-zinc-600 hover:dark:bg-dark-800 bg-zinc-50 transition-colors"
-            >
+            <button type="button" onClick={onCancel}
+              className={clsx('flex-1 py-2.5 border rounded-xl text-sm font-semibold transition-colors',
+                isDark ? 'border-white/8 text-zinc-300 hover:bg-dark-700' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50')}>
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 py-2.5 btn-accent text-white rounded-xl text-sm font-semibold  hover:opacity-90 disabled:opacity-60 transition-all flex items-center justify-center gap-2"
-            >
-              {loading
-                ? <><Loader2 size={14} className="animate-spin" /> Submittingâ€¦</>
-                : 'Submit Request'
-              }
+            <button type="submit" disabled={loading}
+              className="flex-1 py-2.5 btn-accent text-sm flex items-center justify-center gap-2 rounded-xl">
+              {loading ? <><Loader2 size={14} className="animate-spin" /> Submitting…</> : 'Submit Request'}
             </button>
           </div>
         </form>
@@ -390,150 +359,114 @@ function NewRequestForm({
   )
 }
 
-// â”€â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function StudentRequestsPage() {
-  const [requests, setRequests]     = useState<StudentRequest[]>([])
-  const [total, setTotal]           = useState(0)
-  const [loading, setLoading]       = useState(true)
-  const [showForm, setShowForm]     = useState(false)
-  const [filter, setFilter]         = useState<string>('')
+  const [requests, setRequests]       = useState<StudentRequest[]>([])
+  const [total, setTotal]             = useState(0)
+  const [loading, setLoading]         = useState(true)
+  const [showForm, setShowForm]       = useState(false)
+  const [filter, setFilter]           = useState<string>('')
   const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null)
+  const { isDark } = useTheme()
 
-  // Fetch student info once for the form
   useEffect(() => {
-    api.get('/requests/student-info')
-      .then(res => { if (res.data?.success) setStudentInfo(res.data.data) })
-      .catch(() => { /* silent â€” form still works without it */ })
+    api.get('/requests/student-info').then(res => { if (res.data?.success) setStudentInfo(res.data.data) }).catch(() => {})
   }, [])
 
   const loadRequests = useCallback(async () => {
     setLoading(true)
     try {
       const res = await studentService.getRequests(1, 30, filter || undefined)
-      if (res.success && res.data) {
-        setRequests(res.data.data)
-        setTotal(res.data.total)
-      }
-    } finally {
-      setLoading(false)
-    }
+      if (res.success && res.data) { setRequests(res.data.data); setTotal(res.data.total) }
+    } finally { setLoading(false) }
   }, [filter])
 
   useEffect(() => { loadRequests() }, [loadRequests])
 
-  // Called when a request is cancelled inline
   function handleCancelled(id: string) {
-    setRequests(prev =>
-      prev.map(r => r.id === id ? { ...r, status: 'CANCELLED' as RequestStatus } : r)
-    )
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'CANCELLED' as RequestStatus } : r))
   }
 
-  const pending   = requests.filter(r => r.status === 'PENDING').length
-  const approved  = requests.filter(r => r.status === 'APPROVED').length
-  const cancelled = requests.filter(r => r.status === 'CANCELLED').length
+  const pending  = requests.filter(r => r.status === 'PENDING').length
+  const approved = requests.filter(r => r.status === 'APPROVED').length
 
-  const filters = [
-    { label: 'All',       value: '' },
-    { label: 'Pending',   value: 'PENDING' },
-    { label: 'Approved',  value: 'APPROVED' },
-    { label: 'Rejected',  value: 'REJECTED' },
-    { label: 'Cancelled', value: 'CANCELLED' },
-  ]
+  const card = clsx('rounded-2xl border', isDark ? 'bg-dark-900 border-white/5' : 'bg-white border-zinc-200')
 
   return (
     <div className="max-w-2xl mx-auto animate-fade-in">
-
-      {/* Page header */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-            <MessageSquarePlus size={20} className="text-amber-600" />
+          <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center',
+            isDark ? 'bg-amber-500/15 border border-amber-500/20' : 'bg-amber-50 border border-amber-200')}>
+            <MessageSquarePlus size={18} className={isDark ? 'text-amber-400' : 'text-amber-600'} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold dark:text-zinc-100 text-zinc-900">Raise Request</h1>
-            <p className="text-sm dark:text-zinc-500 text-zinc-400">Permission & approval requests</p>
+            <h1 className={clsx('text-2xl font-bold font-display', isDark ? 'text-white' : 'text-zinc-900')}>Raise Request</h1>
+            <p className={clsx('text-sm', isDark ? 'text-zinc-500' : 'text-zinc-400')}>Permission & approval requests</p>
           </div>
         </div>
         {!showForm && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-1.5 px-4 py-2 btn-accent text-white text-sm font-semibold rounded-xl  hover:opacity-90 transition-all"
-          >
-            <Plus size={15} /> New Request
+          <button onClick={() => setShowForm(true)} className="btn-accent text-sm flex items-center gap-1.5 py-2 px-4">
+            <Plus size={14} /> New Request
           </button>
         )}
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-3 mb-5">
-        {[
-          { label: 'Total',     value: total,     color: 'dark:text-zinc-200 text-zinc-700' },
-          { label: 'Pending',   value: pending,   color: 'text-amber-600' },
-          { label: 'Approved',  value: approved,  color: 'text-emerald-600' },
-          { label: 'Cancelled', value: cancelled, color: 'dark:text-zinc-500 text-zinc-400' },
-        ].map(s => (
-          <div key={s.label} className="dark:bg-dark-900 bg-white rounded-2xl border dark:border-white/5 border-zinc-200  p-3 text-center">
-            <p className={clsx('text-xl font-bold', s.color)}>{s.value}</p>
-            <p className="text-[10px] dark:text-zinc-500 text-zinc-400 font-medium mt-0.5">{s.label}</p>
+      <div className="grid grid-cols-3 gap-3 mb-5">
+        {[{ label: 'Total', value: total, color: isDark ? 'text-zinc-200' : 'text-zinc-800' },
+          { label: 'Pending', value: pending, color: 'text-amber-500' },
+          { label: 'Approved', value: approved, color: 'text-emerald-500' }].map(s => (
+          <div key={s.label} className={clsx(card, 'p-4 text-center')}>
+            <p className={clsx('text-2xl font-bold', s.color)}>{s.value}</p>
+            <p className={clsx('text-[11px] font-medium mt-0.5', isDark ? 'text-zinc-500' : 'text-zinc-400')}>{s.label}</p>
           </div>
         ))}
       </div>
 
-      {/* New request form */}
+      {/* Form */}
       {showForm && (
         <div className="mb-5">
-          <NewRequestForm
-            studentInfo={studentInfo}
+          <NewRequestForm studentInfo={studentInfo}
             onSuccess={() => { setShowForm(false); loadRequests() }}
-            onCancel={() => setShowForm(false)}
-          />
+            onCancel={() => setShowForm(false)} />
         </div>
       )}
 
-      {/* Filter pills */}
+      {/* Filter */}
       <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
-        {filters.map(f => (
-          <button
-            key={f.value}
-            onClick={() => setFilter(f.value)}
-            className={clsx(
-              'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
+        {[{ label: 'All', value: '' }, { label: 'Pending', value: 'PENDING' },
+          { label: 'Approved', value: 'APPROVED' }, { label: 'Rejected', value: 'REJECTED' },
+          { label: 'Cancelled', value: 'CANCELLED' }].map(f => (
+          <button key={f.value} onClick={() => setFilter(f.value)}
+            className={clsx('px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
               filter === f.value
-                ? 'bg-accent-600 text-white '
-                : 'bg-white border dark:border-white/8 border-zinc-200 dark:text-zinc-300 text-zinc-600 hover:dark:bg-dark-800 bg-zinc-50',
-            )}
-          >
+                ? 'bg-accent-600 text-white'
+                : isDark ? 'bg-dark-800 border border-white/8 text-zinc-400 hover:border-white/15' : 'bg-white border border-zinc-200 text-zinc-600 hover:border-zinc-300')}>
             {f.label}
           </button>
         ))}
       </div>
 
-      {/* Request list */}
+      {/* List */}
       {loading ? (
         <div className="space-y-3">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-16 dark:bg-dark-700 bg-zinc-100 rounded-2xl animate-pulse" />
-          ))}
+          {[1,2,3].map(i => <div key={i} className={clsx('h-16 rounded-2xl animate-pulse', isDark ? 'bg-dark-800' : 'bg-zinc-100')} />)}
         </div>
       ) : requests.length === 0 ? (
-        <div className="dark:bg-dark-900 bg-white rounded-2xl  border dark:border-white/5 border-zinc-200 p-12 text-center">
-          <Calendar size={36} className="text-slate-200 mx-auto mb-3" />
-          <p className="text-sm font-semibold dark:text-zinc-400 text-zinc-500">
+        <div className={clsx(card, 'p-12 text-center')}>
+          <Calendar size={36} className={clsx('mx-auto mb-3', isDark ? 'text-zinc-700' : 'text-zinc-300')} />
+          <p className={clsx('text-sm font-semibold', isDark ? 'text-zinc-500' : 'text-zinc-500')}>
             {filter ? `No ${filter.toLowerCase()} requests` : 'No requests yet'}
-          </p>
-          <p className="text-xs dark:text-zinc-500 text-zinc-400 mt-1">
-            {!filter && 'Tap New Request to raise a permission request to the Warden'}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {requests.map(r => (
-            <RequestCard key={r.id} req={r} onCancel={handleCancelled} />
-          ))}
+          {requests.map(r => <RequestCard key={r.id} req={r} onCancel={handleCancelled} />)}
         </div>
       )}
     </div>
   )
 }
-

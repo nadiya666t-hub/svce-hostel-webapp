@@ -48,11 +48,16 @@ enum AllocationStatus {
 }
 
 enum RequestType {
+  // Legacy values (kept for existing records)
   GOING_HOME
   OUTING
   LEAVE
   EMERGENCY_LEAVE
   OTHER
+  // New grouped values
+  EMERGENCY
+  IMPORTANT
+  MODERATE
 }
 
 enum RequestStatus {

@@ -258,21 +258,48 @@ export default function HomePage() {
           {/* Institution badge */}
           <div className="flex items-center gap-2 dark:bg-white/5 bg-zinc-100 border dark:border-white/8 border-zinc-200 rounded-full px-4 py-1.5 mb-8 animate-fade-in">
             <MapPin size={12} className="dark:text-accent-400 text-accent-600" />
-            <span className="text-xs dark:text-zinc-400 text-zinc-500 font-medium">Vidyanagar Cross, Bangalore</span>
+            <span className="text-xs dark:text-zinc-400 text-zinc-500 font-medium">SVCE Girls Hostel · Est. 2025</span>
           </div>
 
-          {/* College name */}
-          <div className="text-center mb-12 animate-slide-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
-            <p className="text-xs font-mono font-bold uppercase tracking-[0.4em] dark:text-accent-400 text-accent-600 mb-3">
-              Sri Venkateshwara College of Engineering
-            </p>
-            <h1 className="font-display font-bold dark:text-white text-zinc-900 leading-none mb-4" style={{ fontSize: 'clamp(2.5rem, 8vw, 5rem)' }}>
-              Girls{' '}
-              <span className="text-gradient-accent">Hostel</span>
-            </h1>
-            <p className="text-sm dark:text-zinc-500 text-zinc-400 max-w-sm mx-auto leading-relaxed">
-              Smart hostel management system for students, staff and administration.
-            </p>
+          {/* College logo + name — side by side, prominent */}
+          <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 mb-12 animate-slide-up text-center sm:text-left"
+            style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
+
+            {/* Logo */}
+            <div className="shrink-0 relative">
+              {/* Glow ring behind logo */}
+              <div className="absolute inset-0 rounded-full blur-2xl opacity-30 dark:opacity-40"
+                style={{ background: 'radial-gradient(circle, rgba(59,110,244,0.6) 0%, transparent 70%)', transform: 'scale(1.3)' }} />
+              <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden flex items-center justify-center
+                dark:bg-white bg-white border-2 dark:border-white/20 border-zinc-300 p-1.5 shadow-[0_0_24px_rgba(59,110,244,0.25)]
+                transition-transform duration-300 hover:scale-105">
+                <img
+                  src="/svce-logo.png"
+                  alt="SVCE Logo"
+                  className="w-full h-full object-contain"
+                  onError={e => {
+                    // Fallback to SVG if PNG not found
+                    const img = e.target as HTMLImageElement
+                    if (!img.src.includes('svce-logo.svg')) img.src = '/svce-logo.svg'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* College name */}
+            <div>
+              <p className="text-xs font-mono font-bold uppercase tracking-[0.4em] dark:text-accent-400 text-accent-600 mb-3">
+                Vidyanagar Cross, Bangalore · Est. 2001
+              </p>
+              <h1 className="font-display font-bold dark:text-white text-zinc-900 leading-tight mb-3"
+                style={{ fontSize: 'clamp(1.5rem, 4.5vw, 3rem)' }}>
+                Sri Venkateshwara<br />
+                <span className="text-gradient-accent">College of Engineering</span>
+              </h1>
+              <p className="text-sm dark:text-zinc-500 text-zinc-400 max-w-sm leading-relaxed">
+                Smart hostel management system for students, staff and administration.
+              </p>
+            </div>
           </div>
 
           {/* Live clock */}

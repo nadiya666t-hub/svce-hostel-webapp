@@ -81,7 +81,7 @@ export async function createRequest(req: AuthRequest, res: Response, next: NextF
     const record = await prisma.request.create({
       data: {
         studentId: student.id,
-        type: type as 'GOING_HOME' | 'OUTING' | 'LEAVE' | 'EMERGENCY_LEAVE' | 'OTHER',
+        type: type as 'GOING_HOME' | 'OUTING' | 'LEAVE' | 'EMERGENCY_LEAVE' | 'OTHER' | 'EMERGENCY' | 'IMPORTANT' | 'MODERATE',
         fromDate: from,
         toDate:   to,
         reason:   reason.trim(),
@@ -152,7 +152,8 @@ export async function getStudentInfo(req: AuthRequest, res: Response, next: Next
 
 export const createRequestValidators = [
   body('type')
-    .isIn(['GOING_HOME', 'OUTING', 'LEAVE', 'EMERGENCY_LEAVE', 'OTHER'])
+    .isIn(['EMERGENCY', 'IMPORTANT', 'MODERATE', 'OTHER',
+           'GOING_HOME', 'OUTING', 'LEAVE', 'EMERGENCY_LEAVE']) // legacy + new
     .withMessage('Invalid request type.'),
   body('fromDate')
     .isISO8601().withMessage('Start date must be a valid date.'),
