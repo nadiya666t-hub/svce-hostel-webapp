@@ -1,71 +1,99 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" fill="none">
-  <!-- Shield outer shape -->
-  <path d="M100 8 L185 35 L185 130 Q185 195 100 232 Q15 195 15 130 L15 35 Z"
-    fill="white" stroke="black" stroke-width="5"/>
-  <!-- Shield inner border -->
-  <path d="M100 18 L175 42 L175 128 Q175 188 100 222 Q25 188 25 128 L25 42 Z"
-    fill="none" stroke="black" stroke-width="3"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 230" fill="none">
+  <!-- Outer shield -->
+  <path d="M100 6 L188 36 L188 128 Q188 185 100 224 Q12 185 12 128 L12 36 Z"
+        fill="white" stroke="black" stroke-width="5"/>
+  <!-- Inner shield border -->
+  <path d="M100 16 L178 43 L178 126 Q178 178 100 214 Q22 178 22 126 L22 43 Z"
+        fill="none" stroke="black" stroke-width="2.5"/>
 
-  <!-- Top text: SVCE BENGALURU -->
-  <text x="100" y="50" text-anchor="middle" font-family="Arial, sans-serif"
-    font-size="13" font-weight="900" fill="black" letter-spacing="1">SVCE BENGALURU</text>
+  <!-- Top banner background -->
+  <path d="M100 16 L178 43 L178 62 L22 62 L22 43 Z" fill="black"/>
 
-  <!-- Horizontal divider top -->
-  <line x1="32" y1="57" x2="168" y2="57" stroke="black" stroke-width="2"/>
+  <!-- SVCE BENGALURU text -->
+  <text x="100" y="55" text-anchor="middle" font-family="Arial Black, Arial, sans-serif"
+        font-size="13" font-weight="900" fill="white" letter-spacing="1.2">SVCE BENGALURU</text>
 
-  <!-- Stars left and right of top section -->
-  <text x="42" y="75" text-anchor="middle" font-size="12" fill="black">★</text>
-  <text x="158" y="75" text-anchor="middle" font-size="12" fill="black">★</text>
+  <!-- Stars beside banner -->
+  <text x="30" y="56" text-anchor="middle" font-family="Arial" font-size="11" fill="white">★</text>
+  <text x="170" y="56" text-anchor="middle" font-family="Arial" font-size="11" fill="white">★</text>
 
-  <!-- Building/institution icon (simplified) -->
-  <!-- Main building -->
-  <rect x="72" y="62" width="56" height="32" fill="black" rx="1"/>
-  <rect x="74" y="64" width="52" height="28" fill="white" rx="1"/>
-  <!-- Columns -->
-  <rect x="77" y="66" width="7" height="24" fill="black" rx="1"/>
-  <rect x="87" y="66" width="7" height="24" fill="black" rx="1"/>
-  <rect x="97" y="66" width="7" height="24" fill="black" rx="1"/>
-  <rect x="107" y="66" width="7" height="24" fill="black" rx="1"/>
-  <rect x="117" y="66" width="7" height="24" fill="black" rx="1"/>
-  <!-- Roof/pediment -->
-  <polygon points="70,62 100,50 130,62" fill="black"/>
-  <polygon points="73,62 100,53 127,62" fill="white"/>
+  <!-- Horizontal rule below banner -->
+  <line x1="22" y1="62" x2="178" y2="62" stroke="black" stroke-width="1"/>
 
-  <!-- Computer/book icon (simplified grid) -->
-  <rect x="88" y="68" width="24" height="18" fill="black" rx="2"/>
-  <rect x="90" y="70" width="20" height="14" fill="white" rx="1"/>
-  <line x1="90" y1="75" x2="110" y2="75" stroke="black" stroke-width="1"/>
-  <line x1="90" y1="79" x2="110" y2="79" stroke="black" stroke-width="1"/>
-  <line x1="100" y1="70" x2="100" y2="84" stroke="black" stroke-width="1"/>
+  <!-- === UPPER ICON ROW === -->
+  <!-- Left icon: Open book -->
+  <rect x="36" y="70" width="30" height="22" rx="2" fill="none" stroke="black" stroke-width="2"/>
+  <line x1="51" y1="70" x2="51" y2="92" stroke="black" stroke-width="2"/>
+  <line x1="39" y1="76" x2="49" y2="76" stroke="black" stroke-width="1.5"/>
+  <line x1="39" y1="81" x2="49" y2="81" stroke="black" stroke-width="1.5"/>
+  <line x1="39" y1="86" x2="49" y2="86" stroke="black" stroke-width="1.5"/>
+  <line x1="53" y1="76" x2="63" y2="76" stroke="black" stroke-width="1.5"/>
+  <line x1="53" y1="81" x2="63" y2="81" stroke="black" stroke-width="1.5"/>
+  <line x1="53" y1="86" x2="63" y2="86" stroke="black" stroke-width="1.5"/>
 
-  <!-- Horizontal divider middle -->
-  <line x1="32" y1="100" x2="168" y2="100" stroke="black" stroke-width="2"/>
+  <!-- Right icon: Globe/grid -->
+  <circle cx="149" cy="81" r="14" fill="none" stroke="black" stroke-width="2"/>
+  <ellipse cx="149" cy="81" rx="6" ry="14" fill="none" stroke="black" stroke-width="1.5"/>
+  <line x1="135" y1="81" x2="163" y2="81" stroke="black" stroke-width="1.5"/>
+  <line x1="136" y1="74" x2="162" y2="74" stroke="black" stroke-width="1"/>
+  <line x1="136" y1="88" x2="162" y2="88" stroke="black" stroke-width="1"/>
 
-  <!-- Inner shield / crest area -->
-  <path d="M100 108 L148 122 L148 162 Q148 190 100 205 Q52 190 52 162 L52 122 Z"
-    fill="none" stroke="black" stroke-width="2.5"/>
+  <!-- === BUILDING / COLLEGE === -->
+  <!-- Pediment / roof triangle -->
+  <polygon points="100,66 136,94 64,94" fill="black"/>
+  <polygon points="100,70 132,94 68,94" fill="white"/>
+  <!-- Pediment base bar -->
+  <rect x="62" y="93" width="76" height="5" rx="0" fill="black"/>
+  <!-- Five columns -->
+  <rect x="66" y="98" width="9" height="26" rx="1" fill="black"/>
+  <rect x="78" y="98" width="9" height="26" rx="1" fill="black"/>
+  <rect x="90" y="98" width="9" height="26" rx="1" fill="black"/>
+  <rect x="102" y="98" width="9" height="26" rx="1" fill="black"/>
+  <rect x="114" y="98" width="9" height="26" rx="1" fill="black"/>
+  <!-- Base platform -->
+  <rect x="62" y="124" width="76" height="5" rx="0" fill="black"/>
 
-  <!-- Stars in crest -->
-  <text x="68" y="130" text-anchor="middle" font-size="11" fill="black">★</text>
-  <text x="132" y="130" text-anchor="middle" font-size="11" fill="black">★</text>
+  <!-- Horizontal divider -->
+  <line x1="22" y1="132" x2="178" y2="132" stroke="black" stroke-width="1.5"/>
 
-  <!-- EST 2001 text -->
-  <text x="100" y="150" text-anchor="middle" font-family="Arial, sans-serif"
-    font-size="11" font-weight="700" fill="black" letter-spacing="1">EST · 2001</text>
+  <!-- === INNER CREST === -->
+  <!-- Stars in crest area -->
+  <text x="48" y="150" text-anchor="middle" font-family="Arial" font-size="13" fill="black">★</text>
+  <text x="152" y="150" text-anchor="middle" font-family="Arial" font-size="13" fill="black">★</text>
 
-  <!-- Laurel leaves left -->
-  <g transform="translate(28, 155)" fill="black">
-    <ellipse cx="0" cy="0" rx="5" ry="10" transform="rotate(-60)" />
-    <ellipse cx="8" cy="-5" rx="5" ry="10" transform="rotate(-40)" />
-    <ellipse cx="14" cy="-12" rx="5" ry="10" transform="rotate(-20)" />
-    <ellipse cx="18" cy="-20" rx="4" ry="9" transform="rotate(0)" />
-  </g>
+  <!-- EST·2001 -->
+  <text x="100" y="155" text-anchor="middle" font-family="Arial, sans-serif"
+        font-size="11" font-weight="700" fill="black" letter-spacing="2">EST·2001</text>
 
-  <!-- Laurel leaves right -->
-  <g transform="translate(172, 155)" fill="black">
-    <ellipse cx="0" cy="0" rx="5" ry="10" transform="rotate(60)" />
-    <ellipse cx="-8" cy="-5" rx="5" ry="10" transform="rotate(40)" />
-    <ellipse cx="-14" cy="-12" rx="5" ry="10" transform="rotate(20)" />
-    <ellipse cx="-18" cy="-20" rx="4" ry="9" transform="rotate(0)" />
-  </g>
+  <!-- Horizontal rule -->
+  <line x1="30" y1="162" x2="170" y2="162" stroke="black" stroke-width="1"/>
+
+  <!-- === LAUREL BRANCHES === -->
+  <!-- Left branch stem -->
+  <path d="M30 162 Q25 148 28 135 Q25 122 30 110" stroke="black" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Left leaves -->
+  <ellipse cx="24" cy="158" rx="7" ry="3.5" fill="black" transform="rotate(-30 24 158)"/>
+  <ellipse cx="22" cy="148" rx="7" ry="3.5" fill="black" transform="rotate(-45 22 148)"/>
+  <ellipse cx="22" cy="138" rx="7" ry="3.5" fill="black" transform="rotate(-55 22 138)"/>
+  <ellipse cx="24" cy="128" rx="6" ry="3" fill="black" transform="rotate(-65 24 128)"/>
+  <ellipse cx="27" cy="118" rx="6" ry="3" fill="black" transform="rotate(-70 27 118)"/>
+  <ellipse cx="31" cy="110" rx="6" ry="3" fill="black" transform="rotate(-60 31 110)"/>
+  <!-- Left secondary leaves (other side of stem) -->
+  <ellipse cx="35" cy="155" rx="6" ry="3" fill="black" transform="rotate(-15 35 155)"/>
+  <ellipse cx="34" cy="144" rx="6" ry="3" fill="black" transform="rotate(-20 34 144)"/>
+  <ellipse cx="34" cy="133" rx="6" ry="3" fill="black" transform="rotate(-25 34 133)"/>
+
+  <!-- Right branch stem -->
+  <path d="M170 162 Q175 148 172 135 Q175 122 170 110" stroke="black" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Right leaves -->
+  <ellipse cx="176" cy="158" rx="7" ry="3.5" fill="black" transform="rotate(30 176 158)"/>
+  <ellipse cx="178" cy="148" rx="7" ry="3.5" fill="black" transform="rotate(45 178 148)"/>
+  <ellipse cx="178" cy="138" rx="7" ry="3.5" fill="black" transform="rotate(55 178 138)"/>
+  <ellipse cx="176" cy="128" rx="6" ry="3" fill="black" transform="rotate(65 176 128)"/>
+  <ellipse cx="173" cy="118" rx="6" ry="3" fill="black" transform="rotate(70 173 118)"/>
+  <ellipse cx="169" cy="110" rx="6" ry="3" fill="black" transform="rotate(60 169 110)"/>
+  <!-- Right secondary leaves -->
+  <ellipse cx="165" cy="155" rx="6" ry="3" fill="black" transform="rotate(15 165 155)"/>
+  <ellipse cx="166" cy="144" rx="6" ry="3" fill="black" transform="rotate(20 166 144)"/>
+  <ellipse cx="166" cy="133" rx="6" ry="3" fill="black" transform="rotate(25 166 133)"/>
 </svg>

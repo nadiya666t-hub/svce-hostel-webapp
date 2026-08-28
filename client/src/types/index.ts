@@ -63,6 +63,7 @@ export interface Student {
   status?: string
   importSource?: string
   isActive: boolean
+  photoUrl?: string | null
   createdAt: string
 }
 
@@ -78,8 +79,10 @@ export interface AttendanceRecord {
   markedAt: string
   status: AttendanceStatus
   locationType: LocationVerification
+  verifiedLocation?: 'HOSTEL' | 'COLLEGE' | 'OUTSIDE' | null
   latitude?: number
   longitude?: number
+  gpsAccuracy?: number | null
   distanceFromHostel?: number
   photoUrl?: string
   isSpecialWindow: boolean
@@ -130,17 +133,18 @@ export interface AttendanceStatusResponse {
     istDisplay: string
     date: string
   }
-  hostelLocation: {
-    latitude: number
-    longitude: number
-    radiusMeters: number
+  geofenceConfig: {
+    hostelCentre: { lat: number; lng: number }
+    collegeCentre: { lat: number; lng: number }
+    maxGpsAccuracyMeters: number
   }
   window: {
-    id: string
+    id: string | null
     startTime: string
     endTime: string
     isSpecial: boolean
     reason: string | null
+    approvedLocation: string
   } | null
   windowState: WindowState
   alreadyMarked: boolean
@@ -148,14 +152,19 @@ export interface AttendanceStatusResponse {
     status: AttendanceStatus
     markedAt: string
     locationType: LocationVerification
+    verifiedLocation?: 'HOSTEL' | 'COLLEGE' | 'OUTSIDE' | null
     distanceFromHostel: number | null
   } | null
 }
 
 export interface LocationVerificationResult {
+  verifiedLocation: 'HOSTEL' | 'COLLEGE' | 'OUTSIDE'
   verified: boolean
-  distance: number
-  radiusMeters: number
+  gpsAccuracyTooLow: boolean
+  accuracy: number | null
+  maxAccuracyMeters: number
+  hostelDistanceMeters: number
+  collegeDistanceMeters?: number
   message: string
 }
 

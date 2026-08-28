@@ -4,13 +4,12 @@ import { studentService, type EmergencyContact } from '@/services/studentService
 import { useTheme } from '@/hooks/useTheme'
 import clsx from 'clsx'
 
-// Only show these categories in the Student Portal
-const ALLOWED_CATEGORIES = ['Warden', 'Admin', 'Security', 'General']
+// Student Portal shows: Warden, Admin (includes Hostel Office, Principal, Dean)
+const ALLOWED_CATEGORIES = ['Warden', 'Admin', 'General']
 
 const CATEGORY_META: Record<string, { icon: React.ElementType; accent: string }> = {
   Warden:  { icon: Shield,    accent: '#3b6ef4' },
   Admin:   { icon: Building2, accent: '#8b5cf6' },
-  Security:{ icon: Shield,    accent: '#f59e0b' },
   General: { icon: User,      accent: '#6b7280' },
 }
 

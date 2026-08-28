@@ -11,11 +11,12 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    host: true,          // expose to all network interfaces so mobile can connect
+    host: true, // expose to all network interfaces (LAN + tunnel)
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: process.env.VITE_API_URL || 'http://localhost:5000',
         changeOrigin: true,
+        secure: false,
       },
     },
   },

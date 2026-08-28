@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 560" fill="none">
+  <!-- White background -->
+  <rect width="500" height="560" fill="white"/>
+
+  <!-- ═══ OUTER SHIELD ═══ -->
+  <path d="M250 18 L468 85 L468 300 Q468 430 250 542 Q32 430 32 300 L32 85 Z"
+        fill="white" stroke="black" stroke-width="14" stroke-linejoin="round"/>
+  <!-- Inner shield border line -->
+  <path d="M250 32 L452 95 L452 298 Q452 418 250 526 Q48 418 48 298 L48 95 Z"
+        fill="none" stroke="black" stroke-width="5" stroke-linejoin="round"/>
+
+  <!-- ═══ SVCE BENGALURU TEXT ═══ -->
+  <text x="250" y="90" text-anchor="middle"
+        font-family="'Arial Black', 'Impact', sans-serif"
+        font-size="48" font-weight="900" fill="black" letter-spacing="3">SVCE BENGALURU</text>
+
+  <!-- Horizontal rule under text -->
+  <line x1="60" y1="102" x2="440" y2="102" stroke="black" stroke-width="4"/>
+
+  <!-- ═══ OUTER STARS (beside inner crest) ═══ -->
+  <!-- Left star -->
+  <text x="82" y="252" text-anchor="middle" font-family="Arial" font-size="36" fill="black">★</text>
+  <!-- Right star -->
+  <text x="418" y="252" text-anchor="middle" font-family="Arial" font-size="36" fill="black">★</text>
+
+  <!-- ═══ INNER CREST (shield within shield) ═══ -->
+  <!-- Outer border of inner crest -->
+  <rect x="130" y="112" width="240" height="232" rx="4" fill="black"/>
+  <!-- White fill inside -->
+  <rect x="138" y="120" width="224" height="216" rx="2" fill="white"/>
+
+  <!-- Top section divider (horizontal bar) -->
+  <rect x="138" y="120" width="224" height="110" rx="0" fill="black"/>
+  <!-- White areas in top section -->
+  <rect x="142" y="124" width="105" height="102" fill="white"/>
+  <rect x="253" y="124" width="105" height="102" fill="white"/>
+  <!-- Divider between top two boxes -->
+  <rect x="247" y="124" width="6" height="102" fill="black"/>
+
+  <!-- LEFT TOP: Book icon -->
+  <!-- Book left page -->
+  <rect x="158" y="140" width="38" height="52" rx="3" fill="black"/>
+  <rect x="162" y="144" width="30" height="44" rx="1" fill="white"/>
+  <line x1="177" y1="144" x2="177" y2="188" stroke="black" stroke-width="2"/>
+  <line x1="164" y1="152" x2="175" y2="152" stroke="black" stroke-width="1.5"/>
+  <line x1="164" y1="158" x2="175" y2="158" stroke="black" stroke-width="1.5"/>
+  <line x1="164" y1="164" x2="175" y2="164" stroke="black" stroke-width="1.5"/>
+  <line x1="164" y1="170" x2="175" y2="170" stroke="black" stroke-width="1.5"/>
+  <line x1="179" y1="152" x2="190" y2="152" stroke="black" stroke-width="1.5"/>
+  <line x1="179" y1="158" x2="190" y2="158" stroke="black" stroke-width="1.5"/>
+  <line x1="179" y1="164" x2="190" y2="164" stroke="black" stroke-width="1.5"/>
+  <line x1="179" y1="170" x2="190" y2="170" stroke="black" stroke-width="1.5"/>
+  <!-- Book curve at bottom -->
+  <path d="M158 192 Q177 200 196 192" stroke="black" stroke-width="3" fill="none"/>
+
+  <!-- RIGHT TOP: Gear/cog icon -->
+  <circle cx="305" cy="170" r="35" fill="black"/>
+  <circle cx="305" cy="170" r="26" fill="white"/>
+  <circle cx="305" cy="170" r="12" fill="black"/>
+  <!-- Gear teeth -->
+  <rect x="299" y="132" width="12" height="14" rx="2" fill="black"/>
+  <rect x="299" y="194" width="12" height="14" rx="2" fill="black"/>
+  <rect x="267" y="164" width="14" height="12" rx="2" fill="black"/>
+  <rect x="329" y="164" width="14" height="12" rx="2" fill="black"/>
+  <rect x="274" y="140" width="14" height="12" rx="2" fill="black" transform="rotate(45 281 146)"/>
+  <rect x="322" y="140" width="14" height="12" rx="2" fill="black" transform="rotate(-45 329 146)"/>
+  <rect x="274" y="188" width="14" height="12" rx="2" fill="black" transform="rotate(-45 281 194)"/>
+  <rect x="322" y="188" width="14" height="12" rx="2" fill="black" transform="rotate(45 329 194)"/>
+
+  <!-- ═══ BOTTOM SECTION OF INNER CREST ═══ -->
+  <!-- Horizontal divider -->
+  <rect x="138" y="228" width="224" height="8" fill="black"/>
+
+  <!-- Bottom area background -->
+  <rect x="138" y="236" width="224" height="100" fill="white"/>
+
+  <!-- Inner stars (bottom left and right of building) -->
+  <text x="168" y="282" text-anchor="middle" font-family="Arial" font-size="22" fill="black">★</text>
+  <text x="332" y="282" text-anchor="middle" font-family="Arial" font-size="22" fill="black">★</text>
+
+  <!-- Building / Temple icon -->
+  <!-- Pediment/roof -->
+  <polygon points="250,240 295,262 205,262" fill="black"/>
+  <!-- Columns -->
+  <rect x="212" y="262" width="12" height="38" rx="2" fill="black"/>
+  <rect x="228" y="262" width="12" height="38" rx="2" fill="black"/>
+  <rect x="244" y="262" width="12" height="38" rx="2" fill="black"/>
+  <rect x="260" y="262" width="12" height="38" rx="2" fill="black"/>
+  <rect x="276" y="262" width="12" height="38" rx="2" fill="black"/>
+  <!-- Base -->
+  <rect x="206" y="298" width="88" height="8" rx="1" fill="black"/>
+  <!-- Dome/arch at center -->
+  <ellipse cx="250" cy="280" rx="18" ry="14" fill="black"/>
+  <ellipse cx="250" cy="280" rx="12" ry="9" fill="white"/>
+
+  <!-- EST. 2001 text -->
+  <text x="250" y="328" text-anchor="middle"
+        font-family="'Arial Black', Arial, sans-serif"
+        font-size="22" font-weight="900" fill="black" letter-spacing="2">EST. 2001</text>
+
+  <!-- Bottom inner crest border curve -->
+  <path d="M138 336 Q138 370 250 390 Q362 370 362 336 L362 336 L138 336 Z"
+        fill="black"/>
+  <path d="M145 336 Q145 366 250 384 Q355 366 355 336 Z"
+        fill="white"/>
+
+  <!-- ═══ OUTER SHIELD LOWER FILL ═══ -->
+  <!-- Black lower shield area -->
+  <path d="M250 344 Q148 390 80 370 L80 300 Q80 420 250 528 Q420 420 420 300 L420 370 Q352 390 250 344 Z"
+        fill="black" opacity="0.0"/>
+
+  <!-- ═══ LAUREL BRANCHES ═══ -->
+  <!-- LEFT LAUREL BRANCH -->
+  <g fill="black">
+    <!-- Main stem left -->
+    <path d="M138 430 Q118 400 105 365 Q95 335 98 308" stroke="black" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- Leaves going outward-left -->
+    <ellipse cx="102" cy="420" rx="18" ry="7" fill="black" transform="rotate(-35 102 420)"/>
+    <ellipse cx="94" cy="400" rx="18" ry="7" fill="black" transform="rotate(-45 94 400)"/>
+    <ellipse cx="90" cy="378" rx="17" ry="6.5" fill="black" transform="rotate(-55 90 378)"/>
+    <ellipse cx="90" cy="356" rx="16" ry="6" fill="black" transform="rotate(-62 90 356)"/>
+    <ellipse cx="94" cy="334" rx="15" ry="5.5" fill="black" transform="rotate(-68 94 334)"/>
+    <ellipse cx="100" cy="314" rx="14" ry="5" fill="black" transform="rotate(-72 100 314)"/>
+    <!-- Leaves going inward-right -->
+    <ellipse cx="128" cy="426" rx="16" ry="6" fill="black" transform="rotate(-15 128 426)"/>
+    <ellipse cx="118" cy="408" rx="16" ry="6" fill="black" transform="rotate(-22 118 408)"/>
+    <ellipse cx="112" cy="388" rx="15" ry="6" fill="black" transform="rotate(-28 112 388)"/>
+    <ellipse cx="108" cy="368" rx="14" ry="5.5" fill="black" transform="rotate(-35 108 368)"/>
+    <ellipse cx="108" cy="348" rx="14" ry="5" fill="black" transform="rotate(-42 108 348)"/>
+    <ellipse cx="110" cy="328" rx="13" ry="5" fill="black" transform="rotate(-48 110 328)"/>
+  </g>
+
+  <!-- RIGHT LAUREL BRANCH -->
+  <g fill="black">
+    <!-- Main stem right -->
+    <path d="M362 430 Q382 400 395 365 Q405 335 402 308" stroke="black" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- Leaves going outward-right -->
+    <ellipse cx="398" cy="420" rx="18" ry="7" fill="black" transform="rotate(35 398 420)"/>
+    <ellipse cx="406" cy="400" rx="18" ry="7" fill="black" transform="rotate(45 406 400)"/>
+    <ellipse cx="410" cy="378" rx="17" ry="6.5" fill="black" transform="rotate(55 410 378)"/>
+    <ellipse cx="410" cy="356" rx="16" ry="6" fill="black" transform="rotate(62 410 356)"/>
+    <ellipse cx="406" cy="334" rx="15" ry="5.5" fill="black" transform="rotate(68 406 334)"/>
+    <ellipse cx="400" cy="314" rx="14" ry="5" fill="black" transform="rotate(72 400 314)"/>
+    <!-- Leaves going inward-left -->
+    <ellipse cx="372" cy="426" rx="16" ry="6" fill="black" transform="rotate(15 372 426)"/>
+    <ellipse cx="382" cy="408" rx="16" ry="6" fill="black" transform="rotate(22 382 408)"/>
+    <ellipse cx="388" cy="388" rx="15" ry="6" fill="black" transform="rotate(28 388 388)"/>
+    <ellipse cx="392" cy="368" rx="14" ry="5.5" fill="black" transform="rotate(35 392 368)"/>
+    <ellipse cx="392" cy="348" rx="14" ry="5" fill="black" transform="rotate(42 392 348)"/>
+    <ellipse cx="390" cy="328" rx="13" ry="5" fill="black" transform="rotate(48 390 328)"/>
+  </g>
+</svg>

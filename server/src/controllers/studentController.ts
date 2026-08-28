@@ -119,6 +119,7 @@ export async function getMyProfile(
         status: student.status,
         isActive: student.isActive,
         importSource: student.importSource,
+        photoUrl: student.photoUrl ?? null,
         createdAt: student.createdAt,
       },
     })

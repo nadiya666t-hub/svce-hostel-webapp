@@ -39,19 +39,24 @@ export default function StudentLoginPage() {
 
   useEffect(() => { usnRef.current?.focus() }, [])
 
+  /** Strip hyphens/spaces and uppercase — matches server normaliseUsn() */
+  function normaliseUsn(raw: string): string {
+    return raw.replace(/[-\s]/g, '').toUpperCase()
+  }
+
   // Validate USN on blur — check if it exists in the system
   async function handleUsnBlur() {
-    const trimmed = usn.trim().toUpperCase()
-    if (!trimmed) return
+    const norm = normaliseUsn(usn)
+    if (!norm) return
     try {
-      const res = await authService.checkUsn(trimmed)
+      const res = await authService.checkUsn(norm)
       if (!res.success || !res.data) {
         setUsnError('Invalid USN. Please check your USN.')
         setNeedsSetup(null)
       } else {
         setUsnError('')
         setNeedsSetup(res.data.requiresSetup)
-        setUsn(trimmed)
+        setUsn(norm)
         setTimeout(() => passRef.current?.focus(), 50)
       }
     } catch {
@@ -64,7 +69,7 @@ export default function StudentLoginPage() {
     e.preventDefault()
     setUsnError(''); setPassError('')
 
-    const trimmedUsn = usn.trim().toUpperCase()
+    const trimmedUsn = normaliseUsn(usn)
     if (!trimmedUsn) { setUsnError('Please enter your USN.'); return }
     if (!password)   { setPassError('Please enter your password.'); return }
 
@@ -93,7 +98,7 @@ export default function StudentLoginPage() {
         if (!res.success || !res.data) { setPassError(res.message || 'Failed to set password.'); return }
         setSuccessMsg(`Welcome, ${res.data.user.name}!`)
         login(res.data.token, res.data.user)
-        setTimeout(() => navigate(from, { replace: true }), 600)
+        setTimeout(() => navigate('/student/dashboard', { replace: true }), 600)
       } else {
         // Normal login
         const res = await authService.login({ usn: trimmedUsn, password })

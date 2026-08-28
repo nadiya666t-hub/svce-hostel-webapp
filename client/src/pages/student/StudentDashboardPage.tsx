@@ -258,7 +258,6 @@ export default function StudentDashboardPage() {
 
   const displayName = student?.name ?? user?.name ?? 'Student'
   const attPct = attendance?.percentage ?? 0
-  const circumference = 2 * Math.PI * 26
 
   return (
     <div className="max-w-5xl mx-auto space-y-5 animate-fade-in">
@@ -304,13 +303,13 @@ export default function StudentDashboardPage() {
                   className={isDark ? 'stroke-white/8' : 'stroke-zinc-100'} />
                 <circle cx="34" cy="34" r="26" fill="none" strokeWidth="5"
                   stroke={attPct >= 75 ? '#10b981' : attPct >= 50 ? '#f59e0b' : '#ef4444'}
-                  strokeDasharray={circumference}
-                  strokeDashoffset={circumference - (attPct / 100) * circumference}
+                  strokeDasharray={2 * Math.PI * 26}
+                  strokeDashoffset={2 * Math.PI * 26 - (attPct / 100) * 2 * Math.PI * 26}
                   strokeLinecap="round"
                   style={{ transition: 'stroke-dashoffset 1s ease-out' }} />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className={clsx('text-sm font-bold font-display', isDark ? 'text-white' : 'text-zinc-900')}>{attPct}%</span>
+                <span className={clsx('text-sm font-bold', isDark ? 'text-white' : 'text-zinc-900')}>{attPct}%</span>
               </div>
             </div>
             <p className={clsx('text-[10px] font-medium', isDark ? 'text-zinc-500' : 'text-zinc-400')}>Attendance</p>
@@ -318,7 +317,7 @@ export default function StudentDashboardPage() {
         </div>
       </div>
 
-      {/* ── 4 Stat cards with charts ── */}
+      {/* 4 Stat cards with charts */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard label="Attendance" to="/student/attendance"
           value={attendance ? `${attPct}%` : '—'} icon={CalendarCheck} accent="#3b6ef4"
@@ -342,7 +341,7 @@ export default function StudentDashboardPage() {
         />
       </div>
 
-      {/* ── Quick actions ── */}
+      {/* Quick Actions */}
       <div className={card}>
         <h2 className={clsx(sectionTitle, 'mb-4 flex items-center gap-2')}>
           <TrendingUp size={13} /> Quick Actions
@@ -355,7 +354,7 @@ export default function StudentDashboardPage() {
         </div>
       </div>
 
-      {/* ── Recent activity ── */}
+      {/* Recent activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         <div className={card}>
@@ -415,7 +414,7 @@ export default function StudentDashboardPage() {
         </div>
       </div>
 
-      {/* ── Notices ── */}
+      {/* Notices */}
       <div className={card}>
         <div className="flex items-center justify-between mb-4">
           <h2 className={clsx(sectionTitle, 'flex items-center gap-2')}><Bell size={13} /> Important Notices</h2>

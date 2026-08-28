@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, User, CalendarCheck, MessageSquarePlus,
   AlertTriangle, CreditCard, Bell, Settings, LogOut,
-  Building2, Menu, X, BellDot, Phone,
+  Menu, X, BellDot, Phone,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/hooks/useTheme'
@@ -12,16 +12,16 @@ import ThemeToggle from '@/components/ui/ThemeToggle'
 import clsx from 'clsx'
 
 const navItems = [
-  { to: '/student/dashboard',          label: 'Dashboard',          icon: LayoutDashboard },
-  { to: '/student/profile',            label: 'Profile',            icon: User },
-  { to: '/student/attendance',         label: 'Attendance',         icon: CalendarCheck },
-  { to: '/student/requests',           label: 'Raise Request',      icon: MessageSquarePlus },
-  { to: '/student/problems',           label: 'Raise a Problem',    icon: AlertTriangle },
-  { to: '/student/fees',               label: 'Fees',               icon: CreditCard },
-  { to: '/student/notices',            label: 'Notices',            icon: Bell },
-  { to: '/student/notifications',      label: 'Notifications',      icon: BellDot, badge: true },
-  { to: '/student/emergency-contacts', label: 'Emergency Contacts', icon: Phone },
-  { to: '/student/settings',           label: 'Settings',           icon: Settings },
+  { to: '/student/dashboard',           label: 'Dashboard',          icon: LayoutDashboard },
+  { to: '/student/profile',             label: 'Profile',            icon: User },
+  { to: '/student/attendance',          label: 'Attendance',         icon: CalendarCheck },
+  { to: '/student/requests',            label: 'Raise Request',      icon: MessageSquarePlus },
+  { to: '/student/problems',            label: 'Raise a Problem',    icon: AlertTriangle },
+  { to: '/student/fees',                label: 'Fees',               icon: CreditCard },
+  { to: '/student/notices',             label: 'Notices',            icon: Bell },
+  { to: '/student/notifications',       label: 'Notifications',      icon: BellDot, badge: true },
+  { to: '/student/emergency-contacts',  label: 'Emergency Contacts', icon: Phone },
+  { to: '/student/settings',            label: 'Settings',           icon: Settings },
 ]
 
 function SidebarLink({
@@ -102,9 +102,10 @@ export default function StudentLayout() {
     <nav className={clsx('flex flex-col h-full p-4 border-r', sidebarBg)}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-3 mb-6">
-        <div className="w-8 h-8 rounded-lg bg-accent-600 flex items-center justify-center shrink-0"
-          style={{ boxShadow: '0 0 12px rgba(59,110,244,0.4)' }}>
-          <Building2 size={16} className="text-white" />
+        <div className={clsx('w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-white border',
+          isDark ? 'border-white/10' : 'border-slate-200')}>
+          <img src="/images/svce-logo.png" alt="SVCE Bengaluru Logo" className="w-full h-full object-contain p-0.5"
+            onError={e => { const i = e.currentTarget; if (!i.src.endsWith('.svg')) i.src = '/images/svce-logo.svg' }} />
         </div>
         <div className="min-w-0">
           <p className={clsx('text-xs font-bold font-mono uppercase tracking-widest truncate', isDark ? 'text-zinc-300' : 'text-zinc-700')}>SVCE</p>
@@ -187,8 +188,10 @@ export default function StudentLayout() {
               <Menu size={20} />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-accent-600 flex items-center justify-center">
-                <Building2 size={12} className="text-white" />
+              <div className={clsx('w-6 h-6 rounded-md flex items-center justify-center bg-white border',
+                isDark ? 'border-white/10' : 'border-slate-200')}>
+                <img src="/images/svce-logo.png" alt="SVCE Bengaluru Logo" className="w-full h-full object-contain"
+                  onError={e => { const i = e.currentTarget; if (!i.src.endsWith('.svg')) i.src = '/images/svce-logo.svg' }} />
               </div>
               <span className={clsx('text-xs font-bold font-mono uppercase tracking-widest', isDark ? 'text-zinc-300' : 'text-zinc-700')}>SVCE</span>
             </div>

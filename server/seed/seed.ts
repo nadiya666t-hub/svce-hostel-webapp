@@ -107,9 +107,9 @@ async function main() {
   // ── Student 1: Girikarnika ─────────────────────────────────────────────────
   const giriHash = await argon2.hash('changeme123', { type: argon2.argon2id })
   const giriUser = await prisma.user.upsert({
-    where: { usn: '1VE-25CS-048' },
+    where: { usn: '1VE25CS048' },
     update: {},
-    create: { usn: '1VE-25CS-048', passwordHash: giriHash, role: 'STUDENT', isActive: false },
+    create: { usn: '1VE25CS048', passwordHash: giriHash, role: 'STUDENT', isActive: false },
   })
 
   const giri = await prisma.student.upsert({
@@ -195,9 +195,9 @@ async function main() {
   // ── Student 2: Nadia ──────────────────────────────────────────────────────
   const nadiaHash = await argon2.hash('changeme123', { type: argon2.argon2id })
   const nadiaUser = await prisma.user.upsert({
-    where: { usn: '1VE-25CS-020' },
+    where: { usn: '1VE25CS020' },
     update: {},
-    create: { usn: '1VE-25CS-020', passwordHash: nadiaHash, role: 'STUDENT', isActive: false },
+    create: { usn: '1VE25CS020', passwordHash: nadiaHash, role: 'STUDENT', isActive: false },
   })
 
   const nadia = await prisma.student.upsert({
@@ -266,8 +266,6 @@ async function main() {
 
   // ── Notices ───────────────────────────────────────────────────────────────
   for (const n of [
-    { title: 'Hostel Closed on Independence Day', description: 'The hostel office will be closed on 15 August 2026. Attendance marking will still be active.', priority: 'HIGH' as const, category: 'Events' },
-    { title: 'Wi-Fi Maintenance', description: 'Wi-Fi will be unavailable from 2 AM to 4 AM on 17 August for scheduled maintenance.', priority: 'MEDIUM' as const, category: 'Maintenance' },
     { title: 'Fee Due Reminder', description: 'Please clear pending fees before 30 August 2026 to avoid late charges.', priority: 'URGENT' as const, category: 'Fees' },
   ]) {
     if (!(await prisma.notice.findFirst({ where: { title: n.title } }))) {
@@ -278,15 +276,15 @@ async function main() {
 
   // ── Emergency Contacts ────────────────────────────────────────────────────
   for (const c of [
-    { name: 'Hostel Warden', designation: 'Warden', phone: '+91 98765 43210', email: 'warden@hostel.edu', category: 'Warden', sortOrder: 1 },
-    { name: 'Hostel Office', designation: 'Administrative Office', phone: '+91 98765 43211', email: 'office@hostel.edu', category: 'Admin', sortOrder: 2 },
-    { name: 'Principal', designation: 'Principal', phone: '+91 98765 43212', email: 'principal@hostel.edu', category: 'Admin', sortOrder: 3 },
-    { name: 'Dean of Students', designation: 'Dean', phone: '+91 98765 43213', email: 'dean@hostel.edu', category: 'Admin', sortOrder: 4 },
-    { name: 'Campus Security', designation: 'Security Officer', phone: '+91 98765 43214', category: 'Security', sortOrder: 5 },
-    { name: 'Campus Medical', designation: 'Medical Officer', phone: '+91 98765 43215', email: 'medical@hostel.edu', category: 'Medical', sortOrder: 6 },
-    { name: 'Fire Emergency', designation: 'Emergency Services', phone: '101', category: 'Emergency', sortOrder: 7 },
-    { name: 'Police', designation: 'Emergency Services', phone: '100', category: 'Emergency', sortOrder: 8 },
-    { name: 'Ambulance', designation: 'Emergency Services', phone: '108', category: 'Emergency', sortOrder: 9 },
+    { name: 'Hostel Warden',    designation: 'Warden',                phone: '+91 98765 43210', email: 'warden@hostel.edu',    category: 'Warden',    sortOrder: 1 },
+    { name: 'Hostel Office',    designation: 'Administrative Office', phone: '+91 98765 43211', email: 'office@hostel.edu',    category: 'Admin',     sortOrder: 2 },
+    { name: 'Principal',        designation: 'Principal',             phone: '+91 98765 43212', email: 'principal@hostel.edu', category: 'Admin',     sortOrder: 3 },
+    { name: 'Dean of Students', designation: 'Dean',                  phone: '+91 98765 43213', email: 'dean@hostel.edu',      category: 'Admin',     sortOrder: 4 },
+    { name: 'Campus Security',  designation: 'Security Officer',      phone: '+91 98765 43214',                                category: 'Security',  sortOrder: 5 },
+    { name: 'Campus Medical',   designation: 'Medical Officer',       phone: '+91 98765 43215', email: 'medical@hostel.edu',   category: 'Medical',   sortOrder: 6 },
+    { name: 'Fire Emergency',   designation: 'Emergency Services',    phone: '101',                                            category: 'Emergency', sortOrder: 7 },
+    { name: 'Police',           designation: 'Emergency Services',    phone: '100',                                            category: 'Emergency', sortOrder: 8 },
+    { name: 'Ambulance',        designation: 'Emergency Services',    phone: '108',                                            category: 'Emergency', sortOrder: 9 },
   ]) {
     if (!(await prisma.emergencyContact.findFirst({ where: { phone: c.phone } }))) {
       await prisma.emergencyContact.create({ data: c })
@@ -295,8 +293,8 @@ async function main() {
   console.log('  OK  Emergency contacts')
 
   console.log('\nSeed complete.')
-  console.log('  Girikarnika  USN:1VE-25CS-048  1st Floor Room 105  (isActive=false — needs first-time setup)')
-  console.log('  Nadia        USN:1VE-25CS-020  1st Floor Room 101  (isActive=false — needs first-time setup)')
+  console.log('  Girikarnika  USN:1VE25CS048  1st Floor Room 105  (isActive=false — needs first-time setup)')
+  console.log('  Nadia        USN:1VE25CS020  1st Floor Room 101  (isActive=false — needs first-time setup)')
 }
 
 main()

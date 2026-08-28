@@ -38,7 +38,8 @@ const portals: Portal[] = [
     subtitle: 'Family access',
     description: "Monitor your child's hostel status and attendance.",
     icon: Users,
-    active: false,
+    active: true,
+    path: '/parent/login',
     accentColor: '#10b981',
   },
   {
@@ -47,7 +48,8 @@ const portals: Portal[] = [
     subtitle: 'Floor management',
     description: 'Manage students, attendance windows, and issues.',
     icon: Shield,
-    active: false,
+    active: true,
+    path: '/warden/login',
     accentColor: '#f59e0b',
   },
   {
@@ -270,18 +272,14 @@ export default function HomePage() {
               {/* Glow ring behind logo */}
               <div className="absolute inset-0 rounded-full blur-2xl opacity-30 dark:opacity-40"
                 style={{ background: 'radial-gradient(circle, rgba(59,110,244,0.6) 0%, transparent 70%)', transform: 'scale(1.3)' }} />
-              <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden flex items-center justify-center
-                dark:bg-white bg-white border-2 dark:border-white/20 border-zinc-300 p-1.5 shadow-[0_0_24px_rgba(59,110,244,0.25)]
+              <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center
+                bg-white rounded-2xl border-2 dark:border-white/20 border-zinc-300 p-2 shadow-[0_0_24px_rgba(59,110,244,0.25)]
                 transition-transform duration-300 hover:scale-105">
                 <img
-                  src="/svce-logo.png"
-                  alt="SVCE Logo"
+                  src="/images/svce-logo.png"
+                  alt="Sri Venkateshwara College of Engineering Bengaluru Logo"
                   className="w-full h-full object-contain"
-                  onError={e => {
-                    // Fallback to SVG if PNG not found
-                    const img = e.target as HTMLImageElement
-                    if (!img.src.includes('svce-logo.svg')) img.src = '/svce-logo.svg'
-                  }}
+                  onError={e => { const i = e.currentTarget; if (!i.src.endsWith('.svg')) i.src = '/images/svce-logo.svg' }}
                 />
               </div>
             </div>

@@ -38,3 +38,18 @@ export const uploadProblemPhoto = multer({
   storage: problemStorage, fileFilter: imageFileFilter,
   limits: { fileSize: 5 * 1024 * 1024, files: 1 },
 })
+
+// ── Student enrollment / reference photo ──────────────────────────────────────
+const enrollmentStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, path.join(UPLOAD_ROOT, 'enrollment')),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.jpg'
+    cb(null, `enroll_${uuidv4()}${ext}`)
+  },
+})
+
+export const uploadEnrollmentPhoto = multer({
+  storage: enrollmentStorage,
+  fileFilter: imageFileFilter,
+  limits: { fileSize: 8 * 1024 * 1024, files: 1 },
+})

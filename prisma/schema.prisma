@@ -18,6 +18,7 @@ enum Role {
   OVERSEER
   WATCHMAN
   ADMIN
+  PARENT
 }
 
 enum Gender {
@@ -151,6 +152,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   student Student?
+  warden  Warden?
 
   @@map("users")
 }
@@ -273,6 +275,7 @@ model Student {
   isActive      Boolean       @default(true)
   importSource  ImportSource  @default(MANUAL)
   importedAt    DateTime?     // last time this record was synced from college data
+  photoUrl      String?       // reference photo for attendance enrollment
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -399,6 +402,8 @@ model Attendance {
   locationType        LocationVerification @default(UNVERIFIED)
   latitude            Float?
   longitude           Float?
+  gpsAccuracy         Float?               // GPS accuracy in metres at time of submission
+  verifiedLocation    String?              // 'HOSTEL' | 'COLLEGE' | 'OUTSIDE'
   distanceFromHostel  Float?
   photoUrl            String?
   photoFilename       String?
@@ -581,4 +586,59 @@ model EntryExitRecord {
   student   Student @relation(fields: [studentId], references: [id])
 
   @@map("entry_exit_records")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PARENT PORTAL
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// One parent login account linked to one student's USN.
+/// The college provides the USN + password to the parent.
+/// Password is hashed with argon2id just like student accounts.
+model ParentUser {
+  id           String   @id @default(uuid())
+  usn          String   @unique  // student USN this parent is linked to
+  passwordHash String
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("parent_users")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WARDEN PORTAL
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Warden profile — one per User with role=WARDEN
+model Warden {
+  id          String   @id @default(uuid())
+  name        String
+  phone       String?
+  email       String?
+  designation String   @default("Hostel Warden")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("wardens")
+}
+
+/// Warden announcements broadcast to all students
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  wardenId  String        // userId of Warden who created it
+  createdBy String        // display name of warden
+
+  @@map("announcements")
 }

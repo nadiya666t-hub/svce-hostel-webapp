@@ -1,8 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/hooks/useAuth'
+import { ParentAuthProvider } from '@/hooks/useParentAuth'
 import { ThemeProvider } from '@/hooks/useTheme'
 import HomePage from '@/pages/HomePage'
+// Student
 import StudentLoginPage from '@/pages/student/StudentLoginPage'
+import PhotoEnrollmentPage from '@/pages/student/PhotoEnrollmentPage'
 import StudentDashboardPage from '@/pages/student/StudentDashboardPage'
 import StudentProfilePage from '@/pages/student/StudentProfilePage'
 import StudentAttendancePage from '@/pages/student/StudentAttendancePage'
@@ -13,39 +16,101 @@ import StudentNoticesPage from '@/pages/student/StudentNoticesPage'
 import StudentNotificationsPage from '@/pages/student/StudentNotificationsPage'
 import StudentSettingsPage from '@/pages/student/StudentSettingsPage'
 import StudentEmergencyContactsPage from '@/pages/student/StudentEmergencyContactsPage'
+import StudentEntryExitPage from '@/pages/student/StudentEntryExitPage'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import StudentLayout from '@/layouts/StudentLayout'
+// Parent
+import ParentLoginPage from '@/pages/parent/ParentLoginPage'
+import ParentDashboardPage from '@/pages/parent/ParentDashboardPage'
+import ParentAttendancePage from '@/pages/parent/ParentAttendancePage'
+import ParentFeesPage from '@/pages/parent/ParentFeesPage'
+import ParentOutgoingPage from '@/pages/parent/ParentOutgoingPage'
+import ParentContactsPage from '@/pages/parent/ParentContactsPage'
+import ParentProtectedRoute from '@/components/auth/ParentProtectedRoute'
+import ParentLayout from '@/layouts/ParentLayout'
+// Warden
+import WardenLoginPage from '@/pages/warden/WardenLoginPage'
+import WardenDashboardPage from '@/pages/warden/WardenDashboardPage'
+import WardenStudentsPage from '@/pages/warden/WardenStudentsPage'
+import WardenRoomsPage from '@/pages/warden/WardenRoomsPage'
+import WardenRequestsPage from '@/pages/warden/WardenRequestsPage'
+import WardenProblemsPage from '@/pages/warden/WardenProblemsPage'
+import WardenAttendancePage from '@/pages/warden/WardenAttendancePage'
+import WardenSpecialAccessPage from '@/pages/warden/WardenSpecialAccessPage'
+import WardenAnnouncementsPage from '@/pages/warden/WardenAnnouncementsPage'
+import WardenEmergencyContactsPage from '@/pages/warden/WardenEmergencyContactsPage'
+import WardenProfilePage from '@/pages/warden/WardenProfilePage'
+import WardenNoticesPage from '@/pages/warden/WardenNoticesPage'
+import WardenFeesPage from '@/pages/warden/WardenFeesPage'
+import WardenEntryExitPage from '@/pages/warden/WardenEntryExitPage'
+import WardenWindowsPage from '@/pages/warden/WardenWindowsPage'
+import WardenProtectedRoute from '@/components/auth/WardenProtectedRoute'
+import WardenLayout from '@/layouts/WardenLayout'
+import { WardenAuthProvider } from '@/hooks/useWardenAuth'
 
 function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/student/login" element={<StudentLoginPage />} />
-            <Route
-              path="/student"
-              element={
-                <ProtectedRoute>
-                  <StudentLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="/student/dashboard" replace />} />
-              <Route path="dashboard"          element={<StudentDashboardPage />} />
-              <Route path="profile"            element={<StudentProfilePage />} />
-              <Route path="attendance"         element={<StudentAttendancePage />} />
-              <Route path="requests"           element={<StudentRequestsPage />} />
-              <Route path="problems"           element={<StudentProblemsPage />} />
-              <Route path="fees"               element={<StudentFeesPage />} />
-              <Route path="notices"            element={<StudentNoticesPage />} />
-              <Route path="notifications"      element={<StudentNotificationsPage />} />
-              <Route path="emergency-contacts" element={<StudentEmergencyContactsPage />} />
-              <Route path="settings"           element={<StudentSettingsPage />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <ParentAuthProvider>
+            <WardenAuthProvider>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+
+              {/* ── Student ── */}
+              <Route path="/student/login" element={<StudentLoginPage />} />
+              <Route path="/student/enroll" element={<ProtectedRoute><PhotoEnrollmentPage /></ProtectedRoute>} />
+              <Route path="/student" element={<ProtectedRoute><StudentLayout /></ProtectedRoute>}>
+                <Route index element={<Navigate to="/student/dashboard" replace />} />
+                <Route path="dashboard"          element={<StudentDashboardPage />} />
+                <Route path="profile"            element={<StudentProfilePage />} />
+                <Route path="attendance"         element={<StudentAttendancePage />} />
+                <Route path="requests"           element={<StudentRequestsPage />} />
+                <Route path="problems"           element={<StudentProblemsPage />} />
+                <Route path="fees"               element={<StudentFeesPage />} />
+                <Route path="notices"            element={<StudentNoticesPage />} />
+                <Route path="notifications"      element={<StudentNotificationsPage />} />
+                <Route path="emergency-contacts" element={<StudentEmergencyContactsPage />} />
+                <Route path="entry-exit"         element={<StudentEntryExitPage />} />
+                <Route path="settings"           element={<StudentSettingsPage />} />
+              </Route>
+
+              {/* ── Parent ── */}
+              <Route path="/parent/login" element={<ParentLoginPage />} />
+              <Route path="/parent" element={<ParentProtectedRoute><ParentLayout /></ParentProtectedRoute>}>
+                <Route index element={<Navigate to="/parent/dashboard" replace />} />
+                <Route path="dashboard"  element={<ParentDashboardPage />} />
+                <Route path="attendance" element={<ParentAttendancePage />} />
+                <Route path="fees"       element={<ParentFeesPage />} />
+                <Route path="outgoing"   element={<ParentOutgoingPage />} />
+                <Route path="contacts"   element={<ParentContactsPage />} />
+              </Route>
+
+              {/* ── Warden ── */}
+              <Route path="/warden/login" element={<WardenLoginPage />} />
+              <Route path="/warden" element={<WardenProtectedRoute><WardenLayout /></WardenProtectedRoute>}>
+                <Route index element={<Navigate to="/warden/dashboard" replace />} />
+                <Route path="dashboard"          element={<WardenDashboardPage />} />
+                <Route path="students"           element={<WardenStudentsPage />} />
+                <Route path="rooms"              element={<WardenRoomsPage />} />
+                <Route path="requests"           element={<WardenRequestsPage />} />
+                <Route path="problems"           element={<WardenProblemsPage />} />
+                <Route path="attendance"         element={<WardenAttendancePage />} />
+                <Route path="special-access"     element={<WardenSpecialAccessPage />} />
+                <Route path="announcements"      element={<WardenAnnouncementsPage />} />
+                <Route path="emergency-contacts" element={<WardenEmergencyContactsPage />} />
+                <Route path="profile"            element={<WardenProfilePage />} />
+                <Route path="notices"            element={<WardenNoticesPage />} />
+                <Route path="fees"               element={<WardenFeesPage />} />
+                <Route path="entry-exit"         element={<WardenEntryExitPage />} />
+                <Route path="windows"            element={<WardenWindowsPage />} />
+              </Route>
+
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </WardenAuthProvider>
+          </ParentAuthProvider>
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>

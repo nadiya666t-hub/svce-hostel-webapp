@@ -1,6 +1,6 @@
 ﻿import { useState, useRef, useCallback, useEffect } from 'react'
 import {
-  CalendarCheck, MapPin, Camera, CheckCircle2, XCircle, Clock,
+  CalendarCheck, Camera, CheckCircle2, XCircle, Clock,
   AlertCircle, RefreshCw, ChevronDown, ChevronUp, Loader2,
   Navigation, Lock, Unlock, Image as ImageIcon, BarChart2,
   TrendingUp, Calendar, Info,
@@ -99,7 +99,7 @@ function WindowCard({ windowState, window }: {
           </p>
         ) : (
           <p className={clsx('text-sm', isDark ? 'text-zinc-500' : 'text-zinc-400')}>
-            Normal window: <span className="font-mono font-semibold">8:30 PM – 8:40 PM</span>
+            Opens daily: <span className="font-mono font-semibold">8:30 PM – 8:40 PM</span>
           </p>
         )}
         {window?.reason && (
@@ -119,52 +119,104 @@ function WindowCard({ windowState, window }: {
   )
 }
 
-function LocationCard({ location, onRequest }: {
-  location: ReturnType<typeof useAttendance>['location']
+function LocationCard({ gps, onRequest }: {
+  gps: ReturnType<typeof useAttendance>['gps']
   onRequest: () => void
 }) {
   const { isDark } = useTheme()
-  const verified  = location.result?.verified
-  const hasResult = !!location.result
-  const permDenied = location.permission === 'denied'
+  const verifiedLocation = gps.verifiedLocation
+  const isHostel  = verifiedLocation === 'HOSTEL'
+  const isCollege = verifiedLocation === 'COLLEGE'
+  const isOutside = verifiedLocation === 'OUTSIDE'
+  const verified  = isHostel || isCollege
+  const permDenied = gps.permission === 'denied'
+  const accuracyLow = gps.result?.gpsAccuracyTooLow ?? false
+
+  const borderClass = verified ? 'bg-emerald-500/10 border-emerald-500/25' :
+    isOutside || permDenied || accuracyLow ? 'bg-red-500/10 border-red-500/25' :
+    isDark ? 'bg-dark-800 border-white/8' : 'bg-white border-zinc-200'
+
+  const iconColor = verified ? 'text-emerald-400' : isOutside || permDenied ? 'text-red-400' : 'text-accent-400'
+  const iconBg    = verified ? 'bg-emerald-500/20' : isOutside || permDenied ? 'bg-red-500/20' : isDark ? 'bg-accent-600/15' : 'bg-blue-50'
 
   return (
-    <div className={clsx('rounded-2xl border p-4 flex items-start gap-3',
-      verified   ? 'bg-emerald-500/10 border-emerald-500/25' :
-      hasResult || permDenied ? 'bg-red-500/10 border-red-500/25' :
-      isDark ? 'bg-dark-800 border-white/8' : 'bg-white border-zinc-200'
-    )}>
-      <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center shrink-0',
-        verified ? 'bg-emerald-500/20' : hasResult || permDenied ? 'bg-red-500/20' : isDark ? 'bg-accent-600/15' : 'bg-blue-50')}>
-        <Navigation size={17} className={verified ? 'text-emerald-400' : hasResult || permDenied ? 'text-red-400' : 'text-accent-400'} />
+    <div className={clsx('rounded-2xl border p-4 flex items-start gap-3', borderClass)}>
+      <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center shrink-0', iconBg)}>
+        <Navigation size={17} className={iconColor} />
       </div>
       <div className="flex-1 min-w-0">
         <p className={clsx('text-sm font-bold mb-0.5', isDark ? 'text-zinc-100' : 'text-zinc-900')}>Location</p>
-        {location.checking ? (
+
+        {gps.checking ? (
           <p className={clsx('text-sm flex items-center gap-1.5', isDark ? 'text-zinc-400' : 'text-zinc-500')}>
-            <Loader2 size={13} className="animate-spin" /> Verifying…
+            <Loader2 size={13} className="animate-spin" /> Verifying location…
           </p>
-        ) : verified ? (
-          <p className="text-sm font-semibold text-emerald-400 flex items-center gap-1">
-            <CheckCircle2 size={13} /> Verified — inside hostel area
-            <span className="text-xs text-emerald-500 ml-1">({location.result?.distance} m)</span>
-          </p>
-        ) : hasResult ? (
-          <p className="text-sm font-semibold text-red-400 flex items-center gap-1">
-            <XCircle size={13} /> Outside hostel area ({location.result?.distance} m away)
-          </p>
+        ) : accuracyLow ? (
+          <div>
+            <p className="text-sm font-semibold text-amber-400 flex items-center gap-1">
+              <AlertCircle size={13} /> GPS accuracy too low ({gps.accuracy ? Math.round(gps.accuracy) : '?'} m)
+            </p>
+            <p className={clsx('text-xs mt-1', isDark ? 'text-zinc-500' : 'text-zinc-400')}>
+              Max allowed: {gps.result?.maxAccuracyMeters ?? 50} m. Enable precise location.
+            </p>
+          </div>
+        ) : isHostel ? (
+          <div>
+            <p className="text-sm font-semibold text-emerald-400 flex items-center gap-1.5">
+              <CheckCircle2 size={13} /> <span className="text-emerald-300 font-bold">HOSTEL</span> — Verified ✓
+            </p>
+            <p className={clsx('text-xs mt-0.5', isDark ? 'text-zinc-500' : 'text-zinc-400')}>
+              {gps.coords && <>Lat: {gps.coords.latitude.toFixed(6)} · Lng: {gps.coords.longitude.toFixed(6)}</>}
+              {gps.accuracy && <> · Accuracy: {Math.round(gps.accuracy)} m</>}
+            </p>
+          </div>
+        ) : isCollege ? (
+          <div>
+            <p className="text-sm font-semibold text-blue-400 flex items-center gap-1.5">
+              <CheckCircle2 size={13} /> <span className="text-blue-300 font-bold">COLLEGE</span> — Verified ✓
+            </p>
+            <p className={clsx('text-xs mt-0.5', isDark ? 'text-zinc-500' : 'text-zinc-400')}>
+              {gps.coords && <>Lat: {gps.coords.latitude.toFixed(6)} · Lng: {gps.coords.longitude.toFixed(6)}</>}
+              {gps.accuracy && <> · Accuracy: {Math.round(gps.accuracy)} m</>}
+            </p>
+          </div>
+        ) : isOutside ? (
+          <div>
+            <p className="text-sm font-semibold text-red-400 flex items-center gap-1">
+              <XCircle size={13} /> OUTSIDE — Not in hostel or college area
+            </p>
+            <p className={clsx('text-xs mt-0.5', isDark ? 'text-zinc-500' : 'text-zinc-400')}>
+              Hostel: {gps.result?.hostelDistanceMeters ?? '?'} m away
+              {gps.result?.collegeDistanceMeters != null && <> · College: {gps.result.collegeDistanceMeters} m away</>}
+            </p>
+          </div>
         ) : permDenied ? (
-          <p className="text-sm text-red-400">{location.error}</p>
+          <p className="text-sm text-red-400">{gps.error}</p>
         ) : (
           <p className={clsx('text-sm', isDark ? 'text-zinc-400' : 'text-zinc-500')}>
-            {location.permission === 'unknown' ? 'Location permission required' : 'Tap to check your location'}
+            {gps.permission === 'unknown' ? 'Location permission required' : 'Tap to check your location'}
           </p>
         )}
-        {!location.checking && !verified && (
+
+        {gps.coords && !gps.checking && (
+          <p className={clsx('text-[10px] font-mono mt-1.5', isDark ? 'text-zinc-600' : 'text-zinc-400')}>
+            {gps.coords.latitude.toFixed(6)}, {gps.coords.longitude.toFixed(6)}
+            {gps.accuracy != null && ` · ±${Math.round(gps.accuracy)} m`}
+          </p>
+        )}
+
+        {!gps.checking && !verified && (
           <button onClick={onRequest}
             className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-400 hover:text-accent-300 bg-accent-600/10 hover:bg-accent-600/15 px-3 py-1.5 rounded-lg transition-colors">
-            <MapPin size={11} />
-            {location.permission === 'unknown' ? 'Allow Location' : 'Retry Location'}
+            <RefreshCw size={11} />
+            {gps.permission === 'unknown' ? 'Allow Location' : 'Refresh Location'}
+          </button>
+        )}
+        {verified && !gps.checking && (
+          <button onClick={onRequest}
+            className={clsx('mt-2 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors',
+              isDark ? 'text-zinc-500 hover:text-zinc-300 bg-white/5 hover:bg-white/8' : 'text-zinc-400 hover:text-zinc-600 bg-zinc-100 hover:bg-zinc-200')}>
+            <RefreshCw size={11} /> Refresh Location
           </button>
         )}
       </div>
@@ -263,8 +315,23 @@ function CameraPanel({
         isDark ? 'bg-dark-700' : 'bg-zinc-100')}>
         <Lock size={24} className={isDark ? 'text-zinc-500' : 'text-zinc-400'} />
       </div>
-      <p className={clsx('text-sm font-bold mb-2', isDark ? 'text-zinc-300' : 'text-zinc-600')}>Camera Locked</p>
-      <p className={clsx('text-xs leading-relaxed max-w-[200px] mx-auto', isDark ? 'text-zinc-500' : 'text-zinc-400')}>{canOpenReason}</p>
+      <p className={clsx('text-sm font-bold mb-2', isDark ? 'text-zinc-300' : 'text-zinc-600')}>
+        Attendance Camera Closed
+      </p>
+      <p className={clsx('text-xs leading-relaxed max-w-[220px] mx-auto', isDark ? 'text-zinc-500' : 'text-zinc-400')}>
+        {canOpenReason.includes('No attendance window') || canOpenReason.includes('configured')
+          ? 'The attendance camera will open every day from 8:30 PM to 8:40 PM.'
+          : canOpenReason.includes('before')  || canOpenReason.includes('not started')
+          ? 'The attendance camera will open every day from 8:30 PM to 8:40 PM.'
+          : canOpenReason.includes('closed')  || canOpenReason.includes('after')
+          ? "Today's attendance window was from 8:30 PM to 8:40 PM."
+          : canOpenReason.includes('already') || canOpenReason.includes('marked')
+          ? 'You have already submitted your attendance for today.'
+          : canOpenReason.includes('photo')   || canOpenReason.includes('enroll')
+          ? 'Please capture your profile photo first. Go to Profile → Capture Photo.'
+          : 'The attendance camera will open every day from 8:30 PM to 8:40 PM.'
+        }
+      </p>
     </div>
   )
 
@@ -373,7 +440,7 @@ function HistoryRow({ record, index }: { record: AttendanceRecord; index: number
             { label: 'Date',     value: fmtDate(record.date) },
             { label: 'Status',   value: meta.label },
             { label: 'Time',     value: record.markedAt ? fmtTime(record.markedAt) : '—' },
-            { label: 'Location', value: record.locationType === 'VERIFIED' ? 'Verified ✓' : 'Unverified' },
+            { label: 'Location', value: record.verifiedLocation ?? (record.locationType === 'VERIFIED' ? 'Verified ✓' : 'Unverified') },
             { label: 'Distance', value: record.distanceFromHostel != null ? `${record.distanceFromHostel} m` : '—' },
             { label: 'Window',   value: record.window ? `${record.window.startTime} – ${record.window.endTime}` : '—' },
             ...(record.isSpecialWindow ? [{ label: 'Special', value: record.specialWindowReason ?? 'Yes' }] : []),
@@ -515,7 +582,7 @@ function AttendanceChart({ summary }: { summary: ReturnType<typeof useAttendance
 export default function StudentAttendancePage() {
   const {
     status, statusLoading, statusError, fetchStatus,
-    currentTime, location, requestLocation,
+    currentTime, gps, requestLocation,
     cameraState, setCameraState,
     capturedPhoto, setPhoto, retakePhoto,
     canOpenCamera,
@@ -526,11 +593,7 @@ export default function StudentAttendancePage() {
   const [activeTab, setActiveTab] = useState<'mark' | 'history' | 'stats'>('mark')
   const { allowed: canOpen, reason: canOpenReason } = canOpenCamera()
 
-  useEffect(() => {
-    if (status?.windowState === 'OPEN' && location.permission === 'unknown' && !location.checking) {
-      requestLocation()
-    }
-  }, [status?.windowState, location.permission, location.checking, requestLocation])
+  // Auto-request location removed here — now handled inside useAttendance hook
 
   if (statusLoading) return (
     <div className="max-w-4xl mx-auto space-y-4 animate-pulse pt-2">
@@ -606,7 +669,7 @@ export default function StudentAttendancePage() {
             {/* LEFT — Window + Location */}
             <div className="space-y-4">
               <WindowCard windowState={status?.windowState} window={status?.window} />
-              <LocationCard location={location} onRequest={requestLocation} />
+              <LocationCard gps={gps} onRequest={requestLocation} />
 
               {/* Today's record (if already marked) */}
               {status?.alreadyMarked && status.todayRecord && !submitSuccess && (
@@ -618,7 +681,7 @@ export default function StudentAttendancePage() {
                     {[
                       { label: 'Status',   value: STATUS_META[status.todayRecord.status]?.label ?? status.todayRecord.status },
                       { label: 'Time',     value: fmtTime(status.todayRecord.markedAt) },
-                      { label: 'Location', value: status.todayRecord.locationType === 'VERIFIED' ? 'Verified ✓' : 'Unverified' },
+                      { label: 'Location', value: status.todayRecord.verifiedLocation ?? (status.todayRecord.locationType === 'VERIFIED' ? 'Verified ✓' : 'Unverified') },
                       { label: 'Distance', value: status.todayRecord.distanceFromHostel != null ? `${status.todayRecord.distanceFromHostel} m` : '—' },
                     ].map(({ label, value }) => (
                       <div key={label} className={clsx('rounded-lg px-3 py-2 border', isDark ? 'bg-dark-800 border-white/5' : 'bg-white border-emerald-100')}>
