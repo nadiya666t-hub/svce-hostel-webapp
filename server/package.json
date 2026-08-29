@@ -37,5 +37,10 @@
     "prisma": "^5.19.1",
     "tsx": "^4.19.0",
     "typescript": "^5.5.4"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "argon2@0.40.3": true,
+    "prisma@5.22.0": true
   }
 }

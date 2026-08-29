@@ -28,5 +28,8 @@
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.41",
     "tailwindcss": "^3.4.10"
+  },
+  "allowScripts": {
+    "esbuild@0.21.5": true
   }
 }
