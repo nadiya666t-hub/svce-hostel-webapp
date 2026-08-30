@@ -58,8 +58,9 @@ const portals: Portal[] = [
     subtitle: 'Operations',
     description: 'Oversee hostel operations and administration.',
     icon: Eye,
-    active: false,
-    accentColor: '#8b5cf6',
+    active: true,
+    path: '/overseer/login',
+    accentColor: '#f97316',
   },
   {
     id: 'watchman',
@@ -67,8 +68,9 @@ const portals: Portal[] = [
     subtitle: 'Gate management',
     description: 'Record student entry and exit at the hostel gate.',
     icon: Watch,
-    active: false,
-    accentColor: '#ec4899',
+    active: true,
+    path: '/watchman/login',
+    accentColor: '#14b8a6',
   },
   {
     id: 'admin',

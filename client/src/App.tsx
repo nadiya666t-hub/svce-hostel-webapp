@@ -47,6 +47,23 @@ import WardenWindowsPage from '@/pages/warden/WardenWindowsPage'
 import WardenProtectedRoute from '@/components/auth/WardenProtectedRoute'
 import WardenLayout from '@/layouts/WardenLayout'
 import { WardenAuthProvider } from '@/hooks/useWardenAuth'
+// Overseer
+import OverseerLoginPage from '@/pages/overseer/OverseerLoginPage'
+import OverseerDashboardPage from '@/pages/overseer/OverseerDashboardPage'
+import OverseerProblemsPage from '@/pages/overseer/OverseerProblemsPage'
+import OverseerProblemDetailPage from '@/pages/overseer/OverseerProblemDetailPage'
+import OverseerProfilePage from '@/pages/overseer/OverseerProfilePage'
+import OverseerProtectedRoute from '@/components/auth/OverseerProtectedRoute'
+import OverseerLayout from '@/layouts/OverseerLayout'
+import { OverseerAuthProvider } from '@/hooks/useOverseerAuth'
+// Watchman
+import WatchmanLoginPage from '@/pages/watchman/WatchmanLoginPage'
+import WatchmanDashboardPage from '@/pages/watchman/WatchmanDashboardPage'
+import WatchmanVisitorsPage from '@/pages/watchman/WatchmanVisitorsPage'
+import WatchmanLateEntriesPage from '@/pages/watchman/WatchmanLateEntriesPage'
+import WatchmanProtectedRoute from '@/components/auth/WatchmanProtectedRoute'
+import WatchmanLayout from '@/layouts/WatchmanLayout'
+import { WatchmanAuthProvider } from '@/hooks/useWatchmanAuth'
 
 function App() {
   return (
@@ -55,6 +72,8 @@ function App() {
         <AuthProvider>
           <ParentAuthProvider>
             <WardenAuthProvider>
+            <OverseerAuthProvider>
+            <WatchmanAuthProvider>
             <Routes>
               <Route path="/" element={<HomePage />} />
 
@@ -107,8 +126,29 @@ function App() {
                 <Route path="windows"            element={<WardenWindowsPage />} />
               </Route>
 
+              {/* ── Overseer ── */}
+              <Route path="/overseer/login" element={<OverseerLoginPage />} />
+              <Route path="/overseer" element={<OverseerProtectedRoute><OverseerLayout /></OverseerProtectedRoute>}>
+                <Route index element={<Navigate to="/overseer/dashboard" replace />} />
+                <Route path="dashboard" element={<OverseerDashboardPage />} />
+                <Route path="problems"  element={<OverseerProblemsPage />} />
+                <Route path="problems/:id" element={<OverseerProblemDetailPage />} />
+                <Route path="profile"   element={<OverseerProfilePage />} />
+              </Route>
+
+              {/* ── Watchman ── */}
+              <Route path="/watchman/login" element={<WatchmanLoginPage />} />
+              <Route path="/watchman" element={<WatchmanProtectedRoute><WatchmanLayout /></WatchmanProtectedRoute>}>
+                <Route index element={<Navigate to="/watchman/dashboard" replace />} />
+                <Route path="dashboard"    element={<WatchmanDashboardPage />} />
+                <Route path="visitors"     element={<WatchmanVisitorsPage />} />
+                <Route path="late-entries" element={<WatchmanLateEntriesPage />} />
+              </Route>
+
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+          </WatchmanAuthProvider>
+          </OverseerAuthProvider>
           </WardenAuthProvider>
           </ParentAuthProvider>
         </AuthProvider>
