@@ -71,10 +71,34 @@ export async function createProblem(req: AuthRequest, res: Response, next: NextF
         category: category as 'NO_WATER'|'ELECTRICITY'|'CLEANING'|'PLUMBING'|'FURNITURE'|'WIFI'|'OTHER',
         description,
         photoUrl,
-        roomNumber: s.room.roomNumber, // auto from profile — student cannot change
+        roomNumber: s.room.roomNumber,
         status: 'PENDING',
       },
     })
+
+    // Auto-create OverseerProblem with 48-hour deadline
+    const deadline = new Date(Date.now() + 48 * 60 * 60 * 1000)
+    await prisma.overseerProblem.create({
+      data: {
+        problemId:  record.id,
+        status:     'NEW',
+        deadlineAt: deadline,
+      },
+    })
+
+    // Notify Overseer(s)
+    const overseers = await prisma.overseer.findMany({ where: { isActive: true }, select: { userId: true } })
+    // (Overseer notifications are pull-based — Admin/Warden can view. Student gets confirmation.)
+    await prisma.notification.create({
+      data: {
+        studentId: s.id,
+        type:      'PROBLEM_STATUS_CHANGED',
+        title:     'Problem Submitted',
+        message:   `Your ${category.replace(/_/g,' ').toLowerCase()} problem has been submitted. The Overseer will respond within 48 hours.`,
+        isRead:    false,
+      },
+    })
+
     res.status(201).json({ success: true, message: 'Problem reported.', data: record })
   } catch (err) { next(err) }
 }

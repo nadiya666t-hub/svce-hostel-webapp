@@ -21,6 +21,8 @@ import enrollmentRoutes from './routes/enrollmentRoutes'
 import parentRoutes from './routes/parentRoutes'
 import adminRoutes from './routes/adminRoutes'
 import wardenRoutes from './routes/wardenRoutes'
+import overseerRoutes from './routes/overseerRoutes'
+import watchmanRoutes from './routes/watchmanRoutes'
 
 const app = express()
 
@@ -62,6 +64,8 @@ app.use('/api/enrollment', enrollmentRoutes)
 app.use('/api/parent', parentRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/warden', wardenRoutes)
+app.use('/api/overseer', overseerRoutes)
+app.use('/api/watchman', watchmanRoutes)
 
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'HMS API is running.', timestamp: new Date().toISOString() })
@@ -109,6 +113,36 @@ app.listen(env.PORT, () => {
     console.log(`[cron] Next attendance window auto-create in ${Math.round(delay/60000)} minutes`)
   }
   scheduleWindowCreation()
+
+  // ── 48-hour problem escalation cron (runs every 15 minutes) ──────────────
+  async function runEscalationCheck() {
+    try {
+      const now = new Date()
+      const overdue = await prisma.overseerProblem.findMany({
+        where: { status: { notIn: ['RESOLVED','REJECTED','ESCALATED'] }, deadlineAt: { lt: now } },
+        select: { id: true, problemId: true },
+      })
+      for (const op of overdue) {
+        await prisma.overseerProblem.update({
+          where: { id: op.id },
+          data: { status: 'ESCALATED', escalatedAt: now, escalationReason: 'Auto-escalated: No action within 48 hours.' },
+        })
+        await prisma.overseerProblemUpdate.create({
+          data: { overseerProblemId: op.id, status: 'ESCALATED', comment: 'SYSTEM: Auto-escalated to Admin. No Overseer action within 48 hours.' },
+        })
+        const problem = await prisma.problem.findUnique({ where: { id: op.problemId }, select: { studentId: true, category: true } })
+        if (problem) {
+          await prisma.notification.create({
+            data: { studentId: problem.studentId, type: 'PROBLEM_STATUS_CHANGED', title: 'Problem Escalated', message: `Your ${problem.category.replace(/_/g,' ')} problem has been escalated to Admin as no action was taken within 48 hours.`, isRead: false },
+          })
+        }
+      }
+      if (overdue.length > 0) console.log(`[cron] Auto-escalated ${overdue.length} problem(s) to Admin`)
+    } catch (e) { console.warn('[cron] Escalation check failed:', e) }
+  }
+  runEscalationCheck()
+  setInterval(runEscalationCheck, 15 * 60 * 1000)
+
   // Prevents Prisma connection from going idle/stale on long uptimes.
   const THIRTY_MIN = 30 * 60 * 1000
   setInterval(async () => {

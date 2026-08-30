@@ -1072,6 +1072,24 @@ export async function createNotice(
         academicYearId: currentYear?.id ?? null,
       },
     })
+
+    // ── Broadcast notification to ALL active students ──────────────────────
+    const students = await prisma.student.findMany({
+      where: { isActive: true },
+      select: { id: true },
+    })
+    if (students.length > 0) {
+      await prisma.notification.createMany({
+        data: students.map(s => ({
+          studentId: s.id,
+          type:      'IMPORTANT_NOTICE' as const,
+          title:     `Notice: ${title.trim()}`,
+          message:   description.trim(),
+          isRead:    false,
+        })),
+      })
+    }
+
     res.status(201).json({ success: true, data: notice })
   } catch (err) { next(err) }
 }

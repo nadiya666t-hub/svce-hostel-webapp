@@ -153,6 +153,8 @@ model User {
 
   student Student?
   warden  Warden?
+  overseer Overseer?
+  watchman Watchman?
 
   @@map("users")
 }
@@ -298,6 +300,8 @@ model Student {
   notifications    Notification[]
   entryExitRecords EntryExitRecord[]
   specialWindows   AttendanceWindow[] @relation("SpecialStudentWindow")
+  visitorEntries   VisitorEntry[]
+  lateEntries      LateEntry[]
 
   @@map("students")
 }
@@ -487,6 +491,8 @@ model Problem {
   studentId String
   student   Student @relation(fields: [studentId], references: [id])
 
+  overseerProblem OverseerProblem?
+
   @@map("problems")
 }
 
@@ -641,4 +647,191 @@ model Announcement {
   createdBy String        // display name of warden
 
   @@map("announcements")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// OVERSEER PORTAL
+// ═══════════════════════════════════════════════════════════════════════════════
+
+enum OverseerProblemStatus {
+  NEW
+  ACKNOWLEDGED
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+  ESCALATED
+}
+
+enum PermissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum VisitorEntryStatus {
+  INSIDE
+  EXITED
+}
+
+/// Overseer profile — one per OVERSEER user
+model Overseer {
+  id          String   @id @default(uuid())
+  name        String
+  designation String   @default("Hostel Overseer")
+  phone       String?
+  email       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  assignedProblems OverseerProblem[]
+  problemUpdates   OverseerProblemUpdate[]
+
+  @@map("overseers")
+}
+
+/// Extended problem record managed by Overseer (links to existing Problem)
+model OverseerProblem {
+  id                String               @id @default(uuid())
+  status            OverseerProblemStatus @default(NEW)
+  acknowledgedAt    DateTime?
+  resolvedAt        DateTime?
+  escalatedAt       DateTime?
+  escalationReason  String?
+  rejectedAt        DateTime?
+  rejectReason      String?
+  deadlineAt        DateTime             // createdAt + 48h
+  assignedToId      String?              // overseer userId
+  assignedTo        Overseer?            @relation(fields: [assignedToId], references: [id])
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  // Links to existing Problem record
+  problemId String @unique
+  problem   Problem @relation(fields: [problemId], references: [id])
+
+  updates      OverseerProblemUpdate[]
+  attachments  ProblemAttachment[]
+
+  @@map("overseer_problems")
+}
+
+/// Audit trail for each status change / note added by Overseer
+model OverseerProblemUpdate {
+  id         String               @id @default(uuid())
+  status     OverseerProblemStatus
+  comment    String?
+  createdAt  DateTime             @default(now())
+
+  overseerProblemId String
+  overseerProblem   OverseerProblem @relation(fields: [overseerProblemId], references: [id])
+
+  updatedById String?
+  updatedBy   Overseer? @relation(fields: [updatedById], references: [id])
+
+  @@map("overseer_problem_updates")
+}
+
+/// Photo / video attachments for problems (uploaded by student or overseer)
+model ProblemAttachment {
+  id         String   @id @default(uuid())
+  fileUrl    String
+  fileType   String   // "image" | "video"
+  filename   String?
+  uploadedAt DateTime @default(now())
+
+  overseerProblemId String
+  overseerProblem   OverseerProblem @relation(fields: [overseerProblemId], references: [id])
+
+  @@map("problem_attachments")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WATCHMAN PORTAL
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Watchman profile
+model Watchman {
+  id          String   @id @default(uuid())
+  name        String
+  designation String   @default("Hostel Watchman")
+  phone       String?
+  email       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  lateEntries   LateEntry[]
+  visitorEntries VisitorEntry[]
+
+  @@map("watchmen")
+}
+
+/// Visitor log
+model Visitor {
+  id           String   @id @default(uuid())
+  visitorName  String
+  phone        String?
+  relationship String?  // Mother, Father, Guardian, Friend, etc.
+  purpose      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  entries VisitorEntry[]
+
+  @@map("visitors")
+}
+
+/// Each visit instance
+model VisitorEntry {
+  id               String             @id @default(uuid())
+  entryTime        DateTime
+  expectedExitTime DateTime?
+  exitTime         DateTime?
+  entryStatus      VisitorEntryStatus @default(INSIDE)
+  permissionStatus PermissionStatus   @default(PENDING)
+  approvedBy       String?            // warden name / authority
+  approvedAt       DateTime?
+  remarks          String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  visitorId String
+  visitor   Visitor @relation(fields: [visitorId], references: [id])
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  recordedById String?
+  recordedBy   Watchman? @relation(fields: [recordedById], references: [id])
+
+  @@map("visitor_entries")
+}
+
+/// Late student entry records
+model LateEntry {
+  id               String           @id @default(uuid())
+  date             DateTime         @db.Date
+  entryTime        DateTime
+  reason           String?
+  permissionStatus PermissionStatus @default(PENDING)
+  approvedBy       String?
+  approvedAt       DateTime?
+  remarks          String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+
+  recordedById String?
+  recordedBy   Watchman? @relation(fields: [recordedById], references: [id])
+
+  @@map("late_entries")
 }
