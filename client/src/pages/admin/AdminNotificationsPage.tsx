@@ -27,6 +27,7 @@ export default function AdminNotificationsPage() {
   const [title,    setTitle]    = useState('')
   const [message,  setMessage]  = useState('')
   const [type,     setType]     = useState('GENERAL')
+  const [recipient, setRecipient] = useState<'students'|'warden'>('students')
   const [saving,   setSaving]   = useState(false)
   const [error,    setError]    = useState('')
   const [success,  setSuccess]  = useState('')
@@ -39,7 +40,7 @@ export default function AdminNotificationsPage() {
 
   useEffect(() => { load() }, [load])
 
-  function openForm() { setTitle(''); setMessage(''); setType('GENERAL'); setError(''); setSuccess(''); setShowForm(true) }
+  function openForm() { setTitle(''); setMessage(''); setType('GENERAL'); setRecipient('students'); setError(''); setSuccess(''); setShowForm(true) }
   function closeForm() { setShowForm(false); setError(''); setSuccess('') }
 
   async function handleSend(e: React.FormEvent) {
@@ -47,10 +48,15 @@ export default function AdminNotificationsPage() {
     if (!title.trim() || !message.trim()) { setError('Title and message required.'); return }
     setSaving(true)
     try {
-      const r = await api.post('/admin/notifications/broadcast', { title: title.trim(), message: message.trim(), type })
+      let r
+      if (recipient === 'warden') {
+        r = await api.post('/admin/notifications/broadcast-warden', { title: title.trim(), message: message.trim(), type })
+      } else {
+        r = await api.post('/admin/notifications/broadcast', { title: title.trim(), message: message.trim(), type })
+      }
       if (r.data.success) {
         setSuccess(r.data.message ?? 'Sent successfully.')
-        setTitle(''); setMessage(''); setType('GENERAL')
+        setTitle(''); setMessage(''); setType('GENERAL'); setRecipient('students')
         load()
       } else setError(r.data.message ?? 'Failed.')
     } catch (e2: unknown) {
@@ -100,6 +106,25 @@ export default function AdminNotificationsPage() {
                   isDark?'bg-dark-800 border-white/8 text-slate-100 placeholder-slate-600 focus:border-accent-500':'bg-zinc-50 border-zinc-200 text-slate-900 placeholder-zinc-400 focus:border-accent-500')} />
             </div>
             <div>
+              <label className="field-label">Recipient</label>
+              <div className="flex gap-2 mb-1">
+                <button type="button" onClick={() => setRecipient('students')}
+                  className={clsx('flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all',
+                    recipient === 'students'
+                      ? isDark?'bg-violet-500/20 border-violet-500/40 text-violet-300':'bg-violet-50 border-violet-300 text-violet-700'
+                      : isDark?'border-white/8 text-slate-400 hover:border-white/15':'border-slate-200 text-slate-500 hover:border-slate-300')}>
+                  <Users size={12}/> Active Students
+                </button>
+                <button type="button" onClick={() => setRecipient('warden')}
+                  className={clsx('flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all',
+                    recipient === 'warden'
+                      ? isDark?'bg-emerald-500/20 border-emerald-500/40 text-emerald-300':'bg-emerald-50 border-emerald-300 text-emerald-700'
+                      : isDark?'border-white/8 text-slate-400 hover:border-white/15':'border-slate-200 text-slate-500 hover:border-slate-300')}>
+                  <Users size={12}/> Warden
+                </button>
+              </div>
+            </div>
+            <div>
               <label className="field-label">Type</label>
               <select value={type} onChange={e => setType(e.target.value)} className="input-dark w-full">
                 <option value="GENERAL">General</option>
@@ -109,7 +134,7 @@ export default function AdminNotificationsPage() {
               </select>
             </div>
             <div className={clsx('rounded-xl p-3 text-xs', isDark?'bg-violet-500/10 border border-violet-500/20 text-violet-300':'bg-violet-50 border border-violet-200 text-violet-700')}>
-              ℹ This notification will be sent to <strong>all active students</strong>.
+              ℹ This notification will be sent to <strong>{recipient === 'warden' ? 'all active wardens' : 'all active students'}</strong>.
             </div>
             <div className="flex gap-3">
               <button type="submit" disabled={saving} className="btn-accent text-sm px-5 py-2.5 flex items-center gap-2 disabled:opacity-50">

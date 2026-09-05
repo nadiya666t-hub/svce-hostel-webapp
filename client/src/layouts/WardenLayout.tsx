@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Building2, ClipboardList, AlertTriangle,
   CalendarCheck, ShieldCheck, Megaphone, Phone, User, LogOut, Menu, X,
-  Bell, CreditCard, DoorOpen, Clock,
+  Bell, CreditCard, Clock,
 } from 'lucide-react'
 import { useWardenAuth } from '@/hooks/useWardenAuth'
 import { useTheme } from '@/hooks/useTheme'
@@ -17,7 +17,6 @@ const NAV = [
   { to: '/warden/requests',           label: 'Requests',             icon: ClipboardList },
   { to: '/warden/problems',           label: 'Problems',             icon: AlertTriangle },
   { to: '/warden/attendance',         label: 'Attendance',           icon: CalendarCheck },
-  { to: '/warden/entry-exit',         label: 'Entry / Exit',         icon: DoorOpen },
   { to: '/warden/windows',            label: 'Att. Windows',         icon: Clock },
   { to: '/warden/special-access',     label: 'Special Attendance',   icon: ShieldCheck },
   { to: '/warden/fees',               label: 'Fees',                 icon: CreditCard },

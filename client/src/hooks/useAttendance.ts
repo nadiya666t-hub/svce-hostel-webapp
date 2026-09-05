@@ -1,27 +1,20 @@
 /**
- * useAttendance — central hook for the location-based attendance system.
+ * useAttendance — hook for Wi-Fi network-based attendance system.
  *
- * State machine:
- *   BEFORE_WINDOW → window not open yet
- *   WINDOW_ACTIVE_CHECKING_LOCATION → window open, getting GPS
- *   GPS_PERMISSION_REQUIRED → user denied location
- *   GPS_ACCURACY_LOW → accuracy > maxGpsAccuracyMeters
- *   OUTSIDE_GEOFENCE → inside time window but outside both polygons
- *   HOSTEL_VERIFIED → inside hostel polygon ✓
- *   COLLEGE_VERIFIED → inside college polygon ✓
- *   CAMERA_READY → location OK, camera can open
- *   CAPTURED → photo taken, ready to submit
- *   SUBMITTED → submitted to server
- *   ALREADY_MARKED → already submitted today
- *   WINDOW_CLOSED → after 8:40 PM
- *   ERROR → generic error
+ * GPS geofencing has been replaced by server-side IP/network range verification.
+ * The backend checks if the client's IP belongs to the hostel Wi-Fi (172.16.0.0/20).
+ *
+ * Camera is enabled only when:
+ *   1. Attendance window is OPEN (server time)
+ *   2. Student is connected to approved hostel Wi-Fi (server IP check)
+ *   3. Attendance not already marked today
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { attendanceService } from '@/services/attendanceService'
+import type { NetworkVerificationResult } from '@/services/attendanceService'
 import type {
   AttendanceStatusResponse,
-  LocationVerificationResult,
   AttendanceSummary,
   AttendanceRecord,
   WindowState,
@@ -29,35 +22,16 @@ import type {
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
-export type AttendancePageState =
-  | 'BEFORE_WINDOW'
-  | 'WINDOW_ACTIVE_CHECKING_LOCATION'
-  | 'GPS_PERMISSION_REQUIRED'
-  | 'GPS_ACCURACY_LOW'
-  | 'OUTSIDE_GEOFENCE'
-  | 'HOSTEL_VERIFIED'
-  | 'COLLEGE_VERIFIED'
-  | 'CAMERA_READY'
-  | 'CAPTURED'
-  | 'SUBMITTED'
-  | 'ALREADY_MARKED'
-  | 'WINDOW_CLOSED'
-  | 'NO_WINDOW'
-  | 'ERROR'
-  | 'LOADING'
+export type CameraState = 'locked' | 'capturing' | 'preview' | 'submitting' | 'done'
+export type NetworkLocation = 'HOSTEL' | 'COLLEGE' | 'OUTSIDE' | 'UNKNOWN' | null
 
-export type PermissionState = 'unknown' | 'requesting' | 'granted' | 'denied'
-export type CameraState = 'locked' | 'unlocked' | 'capturing' | 'preview' | 'submitting' | 'done'
-export type VerifiedLocation = 'HOSTEL' | 'COLLEGE' | 'OUTSIDE' | null
-
-export interface GPSState {
-  permission:   PermissionState
-  coords:       GeolocationCoordinates | null
-  accuracy:     number | null          // metres
-  error:        string | null
-  checking:     boolean
-  result:       LocationVerificationResult | null
-  verifiedLocation: VerifiedLocation
+export interface NetworkState {
+  checking:  boolean
+  result:    NetworkVerificationResult | null
+  location:  NetworkLocation
+  verified:  boolean
+  error:     string | null
+  message:   string | null
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -69,15 +43,14 @@ export function useAttendance() {
   const [statusLoading, setStatusLoading] = useState(true)
   const [statusError,   setStatusError]   = useState<string | null>(null)
 
-  // GPS
-  const [gps, setGps] = useState<GPSState>({
-    permission: 'unknown',
-    coords:     null,
-    accuracy:   null,
-    error:      null,
-    checking:   false,
-    result:     null,
-    verifiedLocation: null,
+  // Network / Wi-Fi state (replaces GPS)
+  const [network, setNetwork] = useState<NetworkState>({
+    checking:  false,
+    result:    null,
+    location:  null,
+    verified:  false,
+    error:     null,
+    message:   null,
   })
 
   // Camera
@@ -97,11 +70,9 @@ export function useAttendance() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Track previous window state to auto-trigger location check when window opens
   const prevWindowStateRef = useRef<WindowState | null>(null)
 
   // ── Fetch server status ─────────────────────────────────────────────────────
-
   const fetchStatus = useCallback(async () => {
     setStatusLoading(true)
     setStatusError(null)
@@ -110,6 +81,18 @@ export function useAttendance() {
       if (res.success && res.data) {
         setStatus(res.data)
         if (res.data.alreadyMarked) setCameraState('done')
+
+        // If status includes network verification result, update network state
+        if (res.data.networkVerification) {
+          const nv = res.data.networkVerification as NetworkVerificationResult
+          setNetwork(n => ({
+            ...n,
+            location: nv.location as NetworkLocation,
+            verified: nv.verified,
+            message:  nv.message,
+            result:   nv as NetworkVerificationResult,
+          }))
+        }
       } else {
         setStatusError(res.message ?? 'Failed to load attendance status.')
       }
@@ -126,115 +109,65 @@ export function useAttendance() {
     return () => clearInterval(interval)
   }, [fetchStatus])
 
-  // ── Live IST clock (every second) ─────────────────────────────────────────
-
+  // ── Live IST clock ─────────────────────────────────────────────────────────
   useEffect(() => {
     timerRef.current = setInterval(() => setCurrentTime(new Date()), 1_000)
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [])
 
-  // ── Auto-request location when window opens ────────────────────────────────
-
+  // ── Auto-check network when window opens ───────────────────────────────────
   useEffect(() => {
     const ws = status?.windowState
-    if (
-      ws === 'OPEN' &&
-      prevWindowStateRef.current !== 'OPEN' &&
-      gps.permission === 'unknown' &&
-      !gps.checking
-    ) {
-      requestLocation()
+    if (ws === 'OPEN' && prevWindowStateRef.current !== 'OPEN' && !network.checking) {
+      checkNetwork()
     }
     prevWindowStateRef.current = ws ?? null
   }, [status?.windowState]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Request GPS location ───────────────────────────────────────────────────
-
-  const requestLocation = useCallback(async () => {
-    if (!navigator.geolocation) {
-      setGps(g => ({ ...g, permission: 'denied', error: 'Geolocation is not supported by this browser.' }))
-      return
+  // ── Network verification (calls backend IP check) ─────────────────────────
+  const checkNetwork = useCallback(async () => {
+    setNetwork(n => ({ ...n, checking: true, error: null }))
+    try {
+      const res = await attendanceService.verifyNetwork()
+      if (res.success && res.data) {
+        setNetwork({
+          checking:  false,
+          result:    res.data,
+          location:  res.data.location as NetworkLocation,
+          verified:  res.data.verified,
+          error:     null,
+          message:   res.data.message,
+        })
+      } else {
+        setNetwork(n => ({ ...n, checking: false, error: res.message ?? 'Network check failed.' }))
+      }
+    } catch {
+      setNetwork(n => ({ ...n, checking: false, error: 'Unable to verify network with server.' }))
     }
-    setGps(g => ({ ...g, permission: 'requesting', checking: true, error: null, result: null, verifiedLocation: null }))
-
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude, accuracy } = pos.coords
-        setGps(g => ({ ...g, coords: pos.coords, accuracy, permission: 'granted' }))
-
-        // Send to backend — backend does polygon check
-        try {
-          const res = await attendanceService.verifyLocation(latitude, longitude, accuracy)
-          if (res.success && res.data) {
-            setGps(g => ({
-              ...g,
-              result: res.data!,
-              verifiedLocation: res.data!.verifiedLocation,
-              checking: false,
-            }))
-          } else {
-            setGps(g => ({ ...g, result: null, verifiedLocation: null, checking: false, error: res.message ?? 'Location check failed.' }))
-          }
-        } catch {
-          setGps(g => ({ ...g, checking: false, error: 'Unable to verify location with server.' }))
-        }
-      },
-      (err) => {
-        const msg =
-          err.code === 1 ? 'Location permission denied. Please allow location access in your browser.'
-          : err.code === 2 ? 'Location unavailable. Check your GPS is enabled.'
-          : 'Location request timed out. Please try again.'
-        setGps(g => ({ ...g, permission: 'denied', checking: false, error: msg }))
-      },
-      { enableHighAccuracy: true, timeout: 20_000, maximumAge: 0 }
-    )
   }, [])
 
-  // ── Derived page state ─────────────────────────────────────────────────────
-
-  const pageState: AttendancePageState = (() => {
-    if (statusLoading && !status) return 'LOADING'
-    if (statusError)              return 'ERROR'
-    if (!status)                  return 'LOADING'
-    if (status.alreadyMarked || submitSuccess) return 'ALREADY_MARKED'
-
-    const ws = status.windowState
-    if (ws === 'NO_WINDOW') return 'NO_WINDOW'
-    if (ws === 'BEFORE')    return 'BEFORE_WINDOW'
-    if (ws === 'CLOSED')    return 'WINDOW_CLOSED'
-
-    // Window is OPEN — check location
-    if (gps.permission === 'denied')   return 'GPS_PERMISSION_REQUIRED'
-    if (gps.checking || gps.permission === 'requesting' || gps.permission === 'unknown') return 'WINDOW_ACTIVE_CHECKING_LOCATION'
-
-    if (gps.result?.gpsAccuracyTooLow) return 'GPS_ACCURACY_LOW'
-
-    const loc = gps.verifiedLocation
-    if (loc === 'HOSTEL')  return cameraState === 'locked' || cameraState === 'unlocked' ? 'HOSTEL_VERIFIED' : cameraState === 'done' ? 'SUBMITTED' : 'HOSTEL_VERIFIED'
-    if (loc === 'COLLEGE') return cameraState === 'locked' || cameraState === 'unlocked' ? 'COLLEGE_VERIFIED' : cameraState === 'done' ? 'SUBMITTED' : 'COLLEGE_VERIFIED'
-    if (loc === 'OUTSIDE') return 'OUTSIDE_GEOFENCE'
-
-    return 'WINDOW_ACTIVE_CHECKING_LOCATION'
-  })()
-
-  // Camera open gate
+  // ── Camera open gate ───────────────────────────────────────────────────────
   const canOpenCamera = useCallback((): { allowed: boolean; reason: string } => {
     if (!status) return { allowed: false, reason: 'Loading…' }
-    if (status.alreadyMarked || submitSuccess) return { allowed: false, reason: 'Attendance already marked for today.' }
-    if (status.windowState === 'NO_WINDOW') return { allowed: false, reason: 'The attendance camera will open every day from 8:30 PM to 8:40 PM.' }
-    if (status.windowState === 'BEFORE')    return { allowed: false, reason: `Attendance opens at ${status.window?.startTime ?? '8:30 PM'} IST tonight.` }
-    if (status.windowState === 'CLOSED')    return { allowed: false, reason: "Today's attendance window was from 8:30 PM to 8:40 PM." }
-    if (gps.permission === 'denied')        return { allowed: false, reason: 'Location permission is required for attendance.' }
-    if (gps.checking)                       return { allowed: false, reason: 'Verifying your location…' }
-    if (gps.result?.gpsAccuracyTooLow)      return { allowed: false, reason: `GPS accuracy too low (${Math.round(gps.accuracy ?? 0)} m). Enable precise location.` }
-    if (!gps.result)                        return { allowed: false, reason: 'Location not yet verified. Tap "Check Location".' }
-    if (gps.verifiedLocation === 'OUTSIDE') return { allowed: false, reason: 'You are outside both the hostel and college attendance areas.' }
-    if (gps.verifiedLocation === 'HOSTEL' || gps.verifiedLocation === 'COLLEGE') return { allowed: true, reason: '' }
-    return { allowed: false, reason: 'Location not yet verified.' }
-  }, [status, gps, submitSuccess])
+    if (status.alreadyMarked || submitSuccess)
+      return { allowed: false, reason: 'Attendance already marked for today.' }
+    if (status.windowState === 'NO_WINDOW')
+      return { allowed: false, reason: 'The attendance camera opens every day from 8:30 PM to 9:00 PM.' }
+    if (status.windowState === 'BEFORE')
+      return { allowed: false, reason: `Attendance opens at ${status.window?.startTime ?? '8:30 PM'} IST.` }
+    if (status.windowState === 'CLOSED')
+      return { allowed: false, reason: "Today's attendance window has closed." }
+    // Window is OPEN — check network
+    if (network.checking)
+      return { allowed: false, reason: 'Verifying Wi-Fi connection…' }
+    if (!network.result)
+      return { allowed: false, reason: 'Connect to SVCE-GH hostel Wi-Fi to mark attendance.' }
+    if (!network.verified)
+      return { allowed: false, reason: network.message ?? 'Connect to SVCE-GH hostel Wi-Fi to mark attendance.' }
+    return { allowed: true, reason: '' }
+  }, [status, network, submitSuccess])
 
   // ── Photo capture ──────────────────────────────────────────────────────────
-
   const setPhoto = useCallback((blob: Blob, mime: string) => {
     const url = URL.createObjectURL(blob)
     setCapturedPhoto({ blob, url, mime })
@@ -248,18 +181,14 @@ export function useAttendance() {
   }, [capturedPhoto])
 
   // ── Submit attendance ──────────────────────────────────────────────────────
-
   const submitAttendance = useCallback(async () => {
-    if (!gps.coords) { setSubmitError('No GPS coordinates.'); return }
+    if (!capturedPhoto) { setSubmitError('Please take a photo first.'); return }
     setCameraState('submitting')
     setSubmitError(null)
     try {
       const res = await attendanceService.submitAttendance({
-        latitude:    gps.coords.latitude,
-        longitude:   gps.coords.longitude,
-        gpsAccuracy: gps.accuracy ?? undefined,
-        photoBlob:   capturedPhoto?.blob,
-        photoMime:   capturedPhoto?.mime,
+        photoBlob: capturedPhoto.blob,
+        photoMime: capturedPhoto.mime,
       })
       if (res.success) {
         setSubmitSuccess(true)
@@ -276,10 +205,9 @@ export function useAttendance() {
       setSubmitError(msg ?? 'Submission failed. Please try again.')
       setCameraState('preview')
     }
-  }, [gps.coords, gps.accuracy, capturedPhoto, fetchStatus])
+  }, [capturedPhoto, fetchStatus]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Summary + history ──────────────────────────────────────────────────────
-
   const loadSummary = useCallback(async () => {
     try {
       const res = await attendanceService.getSummary()
@@ -306,48 +234,51 @@ export function useAttendance() {
 
   useEffect(() => { loadHistory(1) }, [loadHistory])
 
-  // ── Window state label ─────────────────────────────────────────────────────
-
   function windowStateLabel(ws: WindowState | undefined): string {
     if (!ws) return '—'
-    if (ws === 'BEFORE')    return 'Not yet open'
-    if (ws === 'OPEN')      return 'Open now'
-    if (ws === 'CLOSED')    return 'Closed'
+    if (ws === 'BEFORE')   return 'Not yet open'
+    if (ws === 'OPEN')     return 'Open now'
+    if (ws === 'CLOSED')   return 'Closed'
     return 'No window today'
   }
 
   return {
-    // status
     status, statusLoading, statusError, fetchStatus,
-    // clock
     currentTime,
-    // gps
-    gps, requestLocation,
-    // page state machine
-    pageState,
-    // camera
+    // network (replaces GPS)
+    network, checkNetwork,
+    // legacy GPS aliases (for backward compat with existing UI components)
+    gps: {
+      permission:       network.verified ? 'granted' : 'unknown',
+      coords:           null,
+      accuracy:         null,
+      error:            network.error,
+      checking:         network.checking,
+      result:           network.result ? {
+        verified:             network.verified,
+        verifiedLocation:     network.location ?? 'OUTSIDE',
+        hostelDistanceMeters: 0,
+        collegeDistanceMeters: 0,
+        maxAccuracyMeters:    0,
+        gpsAccuracyTooLow:    false,
+        message:              network.message ?? '',
+      } : null,
+      verifiedLocation: network.location ?? null,
+    },
+    requestLocation: checkNetwork,
     cameraState, setCameraState,
     capturedPhoto, setPhoto, retakePhoto,
     canOpenCamera,
-    // submit
     submitAttendance, submitError, submitSuccess,
-    // summary + history
     summary, history, historyTotal, historyPage, historyLoading, loadHistory,
-    // helpers
     windowStateLabel,
-
-    // Legacy compatibility (for existing attendance page)
+    // Legacy compat
     location: {
-      permission:   gps.permission,
-      coords:       gps.coords,
-      error:        gps.error,
-      checking:     gps.checking,
-      result: gps.result ? {
-        verified:      gps.verifiedLocation !== 'OUTSIDE' && gps.verifiedLocation !== null,
-        distance:      gps.result.hostelDistanceMeters,
-        radiusMeters:  gps.result.maxAccuracyMeters,
-        message:       gps.result.message,
-      } : null,
+      permission: network.verified ? 'granted' : 'unknown',
+      coords:     null,
+      error:      network.error,
+      checking:   network.checking,
+      result:     network.result ? { verified: network.verified, distance: 0, radiusMeters: 0, message: network.message ?? '' } : null,
     },
   }
 }

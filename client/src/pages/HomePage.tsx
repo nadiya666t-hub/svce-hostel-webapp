@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   GraduationCap, Users, Shield, Eye, Watch, Settings,
   ArrowRight, Clock, X, ChevronRight, Home,
-  MapPin, Building,
+  MapPin,
 } from 'lucide-react'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import clsx from 'clsx'
@@ -246,8 +246,9 @@ export default function HomePage() {
       {/* Header */}
       <header className="relative z-20 flex items-center justify-between px-4 sm:px-8 h-14 dark:border-white/5 border-zinc-200 border-b dark:bg-dark-950/80 bg-white/80 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-accent-600 flex items-center justify-center">
-            <Building size={14} className="text-white" />
+          <div className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center bg-white border dark:border-white/10 border-zinc-200">
+            <img src="/images/svce-logo.png" alt="SVCE" className="w-full h-full object-contain p-0.5"
+              onError={e => { const i = e.currentTarget; if (!i.src.endsWith('.svg')) i.src = '/images/svce-logo.svg' }} />
           </div>
           <span className="text-xs font-bold font-mono dark:text-zinc-400 text-zinc-500 uppercase tracking-widest">SVCE</span>
         </div>
@@ -356,7 +357,15 @@ export default function HomePage() {
           </button>
 
           <div className="mb-8 animate-fade-in">
-            <p className="text-xs font-mono uppercase tracking-[0.3em] dark:text-accent-400 text-accent-600 mb-2">Select Portal</p>
+            <div className="flex items-center gap-3 mb-2">
+              <img
+                src="/images/svce-logo.png"
+                alt="SVCE Logo"
+                className="w-8 h-8 object-contain"
+                onError={e => { const i = e.currentTarget; if (!i.src.endsWith('.svg')) i.src = '/images/svce-logo.svg' }}
+              />
+              <p className="text-xs font-mono uppercase tracking-[0.3em] dark:text-accent-400 text-accent-600">Select Portal</p>
+            </div>
             <h2 className="font-display text-3xl font-bold dark:text-white text-zinc-900">
               Girls Hostel
             </h2>

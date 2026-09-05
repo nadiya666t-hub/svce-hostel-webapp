@@ -10,8 +10,8 @@ import type { Student } from '@/types'
 import { useTheme } from '@/hooks/useTheme'
 import clsx from 'clsx'
 
-function FieldRow({ label, value, icon: Icon, system = false, className }: {
-  label: string; value?: string | number | null; icon: React.ElementType; system?: boolean; className?: string
+function FieldRow({ label, value, icon: Icon, className }: {
+  label: string; value?: string | number | null; icon: React.ElementType; className?: string
 }) {
   if (value == null || value === '' || value === '—') return null
   return (
@@ -23,9 +23,6 @@ function FieldRow({ label, value, icon: Icon, system = false, className }: {
         <p className="text-[11px] dark:text-zinc-500 text-zinc-400 font-medium uppercase tracking-wide">{label}</p>
         <p className="text-sm font-semibold dark:text-zinc-100 text-zinc-900 mt-0.5">{value}</p>
       </div>
-      {system && (
-        <span className="text-[10px] dark:text-zinc-500 text-zinc-400 dark:bg-white/8 bg-zinc-100 px-2 py-0.5 rounded-full shrink-0">System</span>
-      )}
     </div>
   )
 }

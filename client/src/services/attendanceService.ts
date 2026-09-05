@@ -2,10 +2,18 @@ import api from './api'
 import type {
   ApiResponse,
   AttendanceStatusResponse,
-  LocationVerificationResult,
-  AttendanceRecord,
   AttendanceSummary,
+  AttendanceRecord,
 } from '@/types'
+
+export interface NetworkVerificationResult {
+  location:       'HOSTEL' | 'COLLEGE' | 'OUTSIDE' | 'UNKNOWN'
+  verified:       boolean
+  clientIp:       string | null
+  message:        string
+  hostelNetwork:  string
+  collegeNetwork: string | null
+}
 
 export const attendanceService = {
   async getStatus(): Promise<ApiResponse<AttendanceStatusResponse>> {
@@ -13,30 +21,31 @@ export const attendanceService = {
     return res.data
   },
 
-  /** Backend polygon geofence check — returns HOSTEL / COLLEGE / OUTSIDE */
-  async verifyLocation(
-    latitude: number,
-    longitude: number,
-    gpsAccuracy?: number
-  ): Promise<ApiResponse<LocationVerificationResult>> {
-    const res = await api.post('/attendance/verify-location', { latitude, longitude, gpsAccuracy })
+  /** Backend network/IP-range check — returns HOSTEL / COLLEGE / OUTSIDE / UNKNOWN */
+  async verifyNetwork(): Promise<ApiResponse<NetworkVerificationResult>> {
+    const res = await api.post('/attendance/verify-network', {})
     return res.data
   },
 
-  /** Submit attendance: multipart/form-data with GPS + gpsAccuracy + photo */
+  /** Backwards-compat alias for verifyNetwork */
+  async verifyLocation(
+    _latitude?: number,
+    _longitude?: number,
+    _gpsAccuracy?: number
+  ): Promise<ApiResponse<NetworkVerificationResult>> {
+    return this.verifyNetwork()
+  },
+
+  /** Submit attendance: multipart/form-data with photo only (no GPS needed) */
   async submitAttendance(payload: {
-    latitude: number
-    longitude: number
-    gpsAccuracy?: number
     photoBlob?: Blob
     photoMime?: string
+    // GPS fields accepted but ignored (no longer used for auth)
+    latitude?: number
+    longitude?: number
+    gpsAccuracy?: number
   }): Promise<ApiResponse<AttendanceRecord>> {
     const form = new FormData()
-    form.append('latitude',    String(payload.latitude))
-    form.append('longitude',   String(payload.longitude))
-    if (typeof payload.gpsAccuracy === 'number') {
-      form.append('gpsAccuracy', String(payload.gpsAccuracy))
-    }
     if (payload.photoBlob) {
       const ext = payload.photoMime === 'image/png' ? 'png' : 'jpg'
       form.append('photo', payload.photoBlob, `attendance.${ext}`)

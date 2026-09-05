@@ -3,6 +3,7 @@ import { authenticate, requireRole } from '../middleware/auth'
 import { uploadAttendancePhoto } from '../middleware/upload'
 import {
   getAttendanceStatus,
+  verifyNetwork,
   verifyLocation,
   submitAttendance,
   getAttendanceHistory,
@@ -16,13 +17,14 @@ const router = Router()
 router.use(authenticate, requireRole('STUDENT'))
 
 // Status + window
-router.get('/status', getAttendanceStatus)
-router.get('/window/today', getTodayWindow)
+router.get('/status',          getAttendanceStatus)
+router.get('/window/today',    getTodayWindow)
 
-// Location check (no photo)
-router.post('/verify-location', verifyLocation)
+// Network/Wi-Fi check (replaces GPS location check)
+router.post('/verify-network', verifyNetwork)
+router.post('/verify-location', verifyLocation) // backwards compat alias
 
-// Submit attendance with optional photo
+// Submit attendance with photo
 router.post('/submit', uploadAttendancePhoto.single('photo'), submitAttendance)
 
 // History + summary

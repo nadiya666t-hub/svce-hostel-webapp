@@ -270,18 +270,21 @@ export async function sendGlobalNotification(req: AuthRequest, res: Response, ne
     if (!title?.trim() || !message?.trim()) {
       next(createError('Title and message required.', 422)); return
     }
+    // Broadcast to all active students
     const students = await prisma.student.findMany({ where: { isActive: true }, select: { id: true } })
-    if (students.length === 0) { res.json({ success: true, message: 'No active students.' }); return }
-    await prisma.notification.createMany({
-      data: students.map(s => ({
-        studentId: s.id,
-        type:      'IMPORTANT_NOTICE' as const,
-        title:     title.trim(),
-        message:   message.trim(),
-        isRead:    false,
-      })),
-    })
-    res.json({ success: true, message: `Notification sent to ${students.length} students.`, data: { count: students.length } })
+    let count = students.length
+    if (students.length > 0) {
+      await prisma.notification.createMany({
+        data: students.map(s => ({
+          studentId: s.id,
+          type:      'IMPORTANT_NOTICE' as const,
+          title:     title.trim(),
+          message:   message.trim(),
+          isRead:    false,
+        })),
+      })
+    }
+    res.json({ success: true, message: `Notification sent to ${count} students.`, data: { count } })
   } catch (err) { next(err) }
 }
 
@@ -307,7 +310,7 @@ export async function getFloorsRooms(req: AuthRequest, res: Response, next: Next
           include: {
             allocations: {
               where: { status: 'ACTIVE' },
-              include: { student: { select: { name: true, user: { select: { usn: true } } } } },
+              include: { student: { select: { id: true, name: true, user: { select: { usn: true } } } } },
             },
           },
         },
@@ -324,10 +327,145 @@ export async function getFloorsRooms(req: AuthRequest, res: Response, next: Next
         capacity:   r.capacity,
         occupied:   r.allocations.length,
         available:  r.capacity - r.allocations.length,
-        occupants:  r.allocations.map(a => ({ name: a.student.name, usn: a.student.user.usn })),
+        occupants:  r.allocations.map(a => ({ id: a.student.id, name: a.student.name, usn: a.student.user.usn })),
       })),
     }))
 
     res.json({ success: true, data })
+  } catch (err) { next(err) }
+}
+
+// ═══ PROFILE ════════════════════════════════════════════════════════════════
+
+export async function getAdminProfile(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user!.userId } })
+    if (!user) { next(createError('Not found.', 404)); return }
+    res.json({
+      success: true,
+      data: { adminId: user.usn, name: 'Admin', role: user.role, lastLoginAt: user.lastLoginAt },
+    })
+  } catch (err) { next(err) }
+}
+
+export async function changeAdminPassword(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string }
+    if (!currentPassword || !newPassword) { next(createError('Both fields required.', 422)); return }
+    if (newPassword.length < 8) { next(createError('Password must be at least 8 characters.', 422)); return }
+    const user = await prisma.user.findUnique({ where: { id: req.user!.userId } })
+    if (!user) { next(createError('Not found.', 404)); return }
+    const argon2 = await import('argon2')
+    const valid = await argon2.verify(user.passwordHash, currentPassword)
+    if (!valid) { next(createError('Current password is incorrect.', 401)); return }
+    const hash = await argon2.hash(newPassword, { type: argon2.argon2id })
+    await prisma.user.update({ where: { id: user.id }, data: { passwordHash: hash } })
+    res.json({ success: true, message: 'Password changed successfully.' })
+  } catch (err) { next(err) }
+}
+
+// ═══ STAFF LIST (for notice targeting) ══════════════════════════════════════
+
+export async function getStaffList(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const [wardens, watchmen, overseers] = await Promise.all([
+      prisma.warden.findMany({ where: { isActive: true }, select: { id: true, name: true, user: { select: { usn: true } } } }),
+      prisma.watchman.findMany({ where: { isActive: true }, select: { id: true, name: true, user: { select: { usn: true } } } }),
+      prisma.overseer.findMany({ where: { isActive: true }, select: { id: true, name: true, user: { select: { usn: true } } } }),
+    ])
+    res.json({
+      success: true,
+      data: {
+        wardens:   wardens.map(w => ({ id: w.id, name: w.name, usn: w.user.usn, role: 'WARDEN' })),
+        watchmen:  watchmen.map(w => ({ id: w.id, name: w.name, usn: w.user.usn, role: 'WATCHMAN' })),
+        overseers: overseers.map(o => ({ id: o.id, name: o.name, usn: o.user.usn, role: 'OVERSEER' })),
+      },
+    })
+  } catch (err) { next(err) }
+}
+
+// ═══ BROADCAST TO WARDENS ════════════════════════════════════════════════════
+
+export async function sendWardenNotification(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { title, message } = req.body as { title: string; message: string }
+    if (!title?.trim() || !message?.trim()) {
+      next(createError('Title and message required.', 422)); return
+    }
+    // Find all active warden users
+    const wardenUsers = await prisma.user.findMany({
+      where: { role: 'WARDEN', isActive: true },
+      include: { warden: { select: { id: true } } },
+    })
+    // Store as a notice so wardens see it in their notices section
+    const currentYear = await prisma.academicYear.findFirst({ where: { isCurrent: true } })
+    await prisma.notice.create({
+      data: {
+        title:         title.trim(),
+        description:   message.trim(),
+        category:      'General',
+        priority:      'HIGH',
+        isActive:      true,
+        academicYearId: currentYear?.id ?? null,
+      },
+    })
+    res.json({
+      success: true,
+      message: `Notification sent to ${wardenUsers.length} warden(s).`,
+      data: { count: wardenUsers.length },
+    })
+  } catch (err) { next(err) }
+}
+
+// ═══ STUDENT DETAIL (for rooms modal) ═══════════════════════════════════════
+
+export async function getStudentDetail(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { id } = req.params
+    const student = await prisma.student.findUnique({
+      where: { id },
+      include: {
+        user: { select: { usn: true } },
+        room: { include: { floor: true } },
+        allocations: {
+          where: { status: 'ACTIVE' }, take: 1, orderBy: { allocatedAt: 'desc' },
+          include: { room: { include: { floor: true } } },
+        },
+        academicHistory: {
+          take: 1, orderBy: { createdAt: 'desc' },
+          include: { academicYear: { select: { label: true } } },
+        },
+        fees: { take: 1, orderBy: { createdAt: 'desc' } },
+      },
+    })
+    if (!student) { next(createError('Student not found.', 404)); return }
+
+    const room = student.allocations[0]?.room ?? student.room
+    const hist = student.academicHistory[0]
+    const fee  = student.fees[0]
+
+    res.json({
+      success: true,
+      data: {
+        id:          student.id,
+        name:        student.name,
+        usn:         student.user.usn,
+        photoUrl:    student.photoUrl ?? null,
+        floor:       room?.floor?.floorNumber ?? '—',
+        room:        room?.roomNumber ?? '—',
+        year:        hist?.yearLabel     ?? '—',
+        semester:    hist?.semesterLabel ?? '—',
+        academicYear: hist?.academicYear?.label ?? '—',
+        course:      student.course  ?? null,
+        branch:      student.branch  ?? null,
+        gender:      student.gender  ?? null,
+        phone:       student.phone   ?? null,
+        bloodGroup:  student.bloodGroup ?? null,
+        fee: fee ? {
+          paidAmount:    fee.paidAmount,
+          pendingAmount: Math.max(0, fee.totalAmount - fee.paidAmount),
+        } : null,
+      },
+    })
   } catch (err) { next(err) }
 }

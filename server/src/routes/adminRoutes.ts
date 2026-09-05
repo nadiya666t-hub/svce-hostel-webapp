@@ -5,15 +5,20 @@ import { authLimiter } from '../middleware/rateLimiter'
 import {
   adminLogin,
   getDashboardStats,
+  getAdminProfile,
+  changeAdminPassword,
   getStudents,
+  getStudentDetail,
   updateStudentStatus,
   getDailyAttendance,
   getNotices,
   createNotice,
   deleteNotice,
   sendGlobalNotification,
+  sendWardenNotification,
   getNotifications,
   getFloorsRooms,
+  getStaffList,
 } from '../controllers/adminController'
 
 const router = Router()
@@ -29,8 +34,13 @@ router.use(authenticate, requireRole('ADMIN'))
 
 router.get('/dashboard/stats',          getDashboardStats)
 
+// Profile
+router.get('/profile',                  getAdminProfile)
+router.patch('/profile/password',       changeAdminPassword)
+
 // Students
 router.get('/students',                 getStudents)
+router.get('/students/:id',             getStudentDetail)
 router.patch('/students/:id/status',    updateStudentStatus)
 
 // Attendance
@@ -44,6 +54,10 @@ router.delete('/notices/:id',           deleteNotice)
 // Notifications
 router.get('/notifications',            getNotifications)
 router.post('/notifications/broadcast', sendGlobalNotification)
+router.post('/notifications/broadcast-warden', sendWardenNotification)
+
+// Staff (for notice targeting)
+router.get('/staff',                    getStaffList)
 
 // Rooms
 router.get('/floors-rooms',             getFloorsRooms)

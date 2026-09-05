@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, CalendarCheck, Bell, BellRing, Building2, LogOut, Menu, X, ShieldCheck } from 'lucide-react'
+import { LayoutDashboard, Users, CalendarCheck, Bell, BellRing, Building2, LogOut, Menu, X, ShieldCheck, User } from 'lucide-react'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
 import { useTheme } from '@/hooks/useTheme'
 import ThemeToggle from '@/components/ui/ThemeToggle'
@@ -13,6 +13,7 @@ const NAV = [
   { to: '/admin/notices',        label: 'Notices',        icon: Bell },
   { to: '/admin/notifications',  label: 'Notifications',  icon: BellRing },
   { to: '/admin/rooms',          label: 'Rooms',          icon: Building2 },
+  { to: '/admin/profile',        label: 'Profile',        icon: User },
 ]
 
 export default function AdminLayout() {

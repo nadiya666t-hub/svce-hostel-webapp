@@ -26,6 +26,10 @@ import watchmanRoutes from './routes/watchmanRoutes'
 
 const app = express()
 
+// Trust proxy headers (X-Forwarded-For) so real client IPs are visible
+// when behind nginx, load balancers, ngrok, or other reverse proxies
+app.set('trust proxy', true)
+
 app.use(helmet())
 app.use(cors({
   origin: (origin, callback) => {
@@ -100,7 +104,7 @@ app.listen(env.PORT, () => {
         if (!existing) {
           await prisma.attendanceWindow.create({
             data: {
-              date: dateObj, startTime: '20:30', endTime: '20:40',
+              date: dateObj, startTime: '20:30', endTime: '21:00',
               isDefault: true, isSpecial: false,
               windowStatus: 'ACTIVE', approvedLocation: 'HOSTEL_CAMPUS',
             },

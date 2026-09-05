@@ -7,6 +7,7 @@ import {
   getDashboardStats, getVisitors, recordVisitor, markVisitorExit,
   updatePermission, getLateEntries, recordLateEntry,
   updateLateEntryPermission, getWatchmanProfile, getInstructions,
+  changeWatchmanPassword,
 } from '../controllers/watchmanController'
 
 const router = Router()
@@ -20,10 +21,7 @@ router.use(authenticate, requireRole('WATCHMAN'))
 
 router.get('/dashboard/stats',                   getDashboardStats)
 router.get('/profile',                           getWatchmanProfile)
-router.get('/visitors',                          getVisitors)
-router.post('/visitors',                         recordVisitor)
-router.patch('/visitors/:id/exit',               markVisitorExit)
-router.patch('/visitors/:id/permission',         updatePermission)
+router.patch('/profile/password',                changeWatchmanPassword)
 router.get('/late-entries',                      getLateEntries)
 router.post('/late-entries',                     recordLateEntry)
 router.patch('/late-entries/:id/permission',     updateLateEntryPermission)

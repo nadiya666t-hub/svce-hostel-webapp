@@ -87,20 +87,19 @@ export default function WardenAttendancePage() {
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search student…" className="input-dark text-sm"/>
         <select value={floor} onChange={e=>setFloor(e.target.value)} className="input-dark text-sm">
           <option value="">All Floors</option>
-          {['1st Floor','2nd Floor','3rd Floor','4th Floor'].map(f=><option key={f}>{f}</option>)}
+          {['1st Floor','2nd Floor','3rd Floor'].map(f=><option key={f}>{f}</option>)}
         </select>
         <input value={room} onChange={e=>setRoom(e.target.value)} placeholder="Room no…" className="input-dark text-sm"/>
       </div>
 
       {/* Summary */}
       {summary && (
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
           {[
             {l:'Total',v:summary.totalStudents,c:isDark?'text-slate-100':'text-slate-800'},
             {l:'Present',v:summary.present,c:'text-emerald-500'},
             {l:'Absent',v:summary.absent,c:'text-red-500'},
             {l:'Late',v:summary.late,c:'text-amber-400'},
-            {l:'Excused',v:summary.excused,c:'text-blue-400'},
             {l:'Rate',v:`${summary.percentage}%`,c:summary.percentage>=75?'text-emerald-500':'text-amber-500'},
           ].map(({l,v,c})=>(
             <div key={l} className={clsx('rounded-2xl border p-3 text-center',isDark?'bg-dark-900 border-white/8':'bg-white border-slate-200 shadow-sm')}>
@@ -113,7 +112,7 @@ export default function WardenAttendancePage() {
 
       {/* Status filter */}
       <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
-        {['ALL','PRESENT','LATE_PRESENT','ABSENT','EXCUSED','NOT_SUBMITTED'].map(f=>(
+        {['ALL','PRESENT','LATE_PRESENT','ABSENT','NOT_SUBMITTED'].map(f=>(
           <button key={f} onClick={()=>setFilter(f)}
             className={clsx('px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
               filter===f?'bg-accent-600 text-white':isDark?'bg-dark-800 border border-white/8 text-slate-300 hover:bg-dark-700':'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50')}>

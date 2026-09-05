@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Bell, Plus, Loader2, X, Pencil, Trash2, Users, User } from 'lucide-react'
+import { Bell, Plus, Loader2, X, Pencil, Trash2, Users, User, Shield } from 'lucide-react'
 import { wardenService } from '@/services/wardenService'
 import { useTheme } from '@/hooks/useTheme'
+import api from '@/services/api'
 import clsx from 'clsx'
 
 const PRIORITY_META: Record<string,{label:string;color:string}> = {
@@ -13,22 +14,25 @@ const PRIORITY_META: Record<string,{label:string;color:string}> = {
 function fmt(iso:string){ return new Date(iso).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) }
 
 interface Student { id: string; name: string; usn: string }
+interface Watchman { id: string; name: string; usn: string }
 
 export default function WardenNoticesPage() {
   const { isDark } = useTheme()
-  const [notices,   setNotices]   = useState<Record<string,unknown>[]>([])
-  const [students,  setStudents]  = useState<Student[]>([])
-  const [loading,   setLoading]   = useState(true)
-  const [showForm,  setShowForm]  = useState(false)
-  const [editId,    setEditId]    = useState<string|null>(null)
-  const [title,     setTitle]     = useState('')
-  const [desc,      setDesc]      = useState('')
-  const [cat,       setCat]       = useState('General')
-  const [prio,      setPrio]      = useState('MEDIUM')
-  const [target,    setTarget]    = useState<'all'|'student'>('all')
-  const [studentId, setStudentId] = useState('')
-  const [saving,    setSaving]    = useState(false)
-  const [error,     setError]     = useState('')
+  const [notices,    setNotices]   = useState<Record<string,unknown>[]>([])
+  const [students,   setStudents]  = useState<Student[]>([])
+  const [watchmen,   setWatchmen]  = useState<Watchman[]>([])
+  const [loading,    setLoading]   = useState(true)
+  const [showForm,   setShowForm]  = useState(false)
+  const [editId,     setEditId]    = useState<string|null>(null)
+  const [title,      setTitle]     = useState('')
+  const [desc,       setDesc]      = useState('')
+  const [cat,        setCat]       = useState('General')
+  const [prio,       setPrio]      = useState('MEDIUM')
+  const [target,     setTarget]    = useState<'all'|'student'|'watchman'>('all')
+  const [studentId,  setStudentId] = useState('')
+  const [watchmanId, setWatchmanId]= useState('')
+  const [saving,     setSaving]    = useState(false)
+  const [error,      setError]     = useState('')
 
   const loadNotices = useCallback(async()=>{
     setLoading(true)
@@ -41,16 +45,20 @@ export default function WardenNoticesPage() {
     wardenService.getStudents({ page:1, limit:200 }).then((r: { success: boolean; data?: { students?: Student[] } }) => {
       if(r.success) setStudents((r.data?.students ?? []) as Student[])
     }).catch(()=>{})
+    // Load watchmen for targeting
+    api.get('/admin/staff').then(r => {
+      if(r.data.success) setWatchmen(r.data.data.watchmen ?? [])
+    }).catch(()=>{})
   },[loadNotices])
 
   function openCreate(){
     setEditId(null); setTitle(''); setDesc(''); setCat('General'); setPrio('MEDIUM')
-    setTarget('all'); setStudentId(''); setError(''); setShowForm(true)
+    setTarget('all'); setStudentId(''); setWatchmanId(''); setError(''); setShowForm(true)
   }
   function openEdit(n:Record<string,unknown>){
     setEditId(n.id as string); setTitle(n.title as string); setDesc(n.description as string)
     setCat(n.category as string); setPrio(n.priority as string)
-    setTarget('all'); setStudentId(''); setError(''); setShowForm(true)
+    setTarget('all'); setStudentId(''); setWatchmanId(''); setError(''); setShowForm(true)
   }
   function closeForm(){ setShowForm(false); setEditId(null); setTitle(''); setDesc(''); setError('') }
 
@@ -58,6 +66,7 @@ export default function WardenNoticesPage() {
     e.preventDefault(); setError('')
     if(!title.trim()||!desc.trim()){ setError('Title and description required.'); return }
     if(target==='student'&&!studentId){ setError('Please select a student.'); return }
+    if(target==='watchman'&&!watchmanId){ setError('Please select a watchman.'); return }
     setSaving(true)
     try {
       const data: Record<string,unknown> = {
@@ -143,12 +152,27 @@ export default function WardenNoticesPage() {
                         : isDark?'border-white/8 text-slate-400 hover:border-white/15':'border-slate-200 text-slate-500 hover:border-slate-300')}>
                     <User size={13}/> Specific Student
                   </button>
+                  <button type="button" onClick={()=>setTarget('watchman')}
+                    className={clsx('flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all',
+                      target==='watchman'
+                        ? isDark?'bg-teal-500/20 border-teal-500/40 text-teal-300':'bg-teal-50 border-teal-300 text-teal-700'
+                        : isDark?'border-white/8 text-slate-400 hover:border-white/15':'border-slate-200 text-slate-500 hover:border-slate-300')}>
+                    <Shield size={13}/> Watchman
+                  </button>
                 </div>
                 {target==='student' && (
                   <select value={studentId} onChange={e=>setStudentId(e.target.value)} className="input-dark w-full">
                     <option value="">— Select student —</option>
                     {students.map(s=>(
                       <option key={s.id} value={s.id}>{s.name} ({s.usn})</option>
+                    ))}
+                  </select>
+                )}
+                {target==='watchman' && (
+                  <select value={watchmanId} onChange={e=>setWatchmanId(e.target.value)} className="input-dark w-full">
+                    <option value="">— Select watchman —</option>
+                    {watchmen.map(w=>(
+                      <option key={w.id} value={w.id}>{w.name} ({w.usn})</option>
                     ))}
                   </select>
                 )}

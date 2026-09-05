@@ -103,7 +103,7 @@ export default function WardenStudentsPage() {
         </div>
         <select value={floor} onChange={e=>setFloor(e.target.value)} className="input-dark text-sm">
           <option value="">All Floors</option>
-          {['1st Floor','2nd Floor','3rd Floor','4th Floor'].map(f=><option key={f}>{f}</option>)}
+          {['1st Floor','2nd Floor','3rd Floor'].map(f=><option key={f}>{f}</option>)}
         </select>
         <select value={status} onChange={e=>setStatus(e.target.value)} className="input-dark text-sm">
           <option value="">All Status</option>

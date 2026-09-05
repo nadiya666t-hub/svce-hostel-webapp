@@ -353,3 +353,20 @@ export async function getInstructions(req: AuthRequest, res: Response, next: Nex
     res.json({ success: true, data })
   } catch (err) { next(err) }
 }
+
+// ── PATCH /api/watchman/profile/password ─────────────────────────────────────
+export async function changeWatchmanPassword(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string }
+    if (!currentPassword || !newPassword) { next(createError('Both fields required.', 422)); return }
+    if (newPassword.length < 8) { next(createError('Password must be at least 8 characters.', 422)); return }
+    const user = await prisma.user.findUnique({ where: { id: req.user!.userId } })
+    if (!user) { next(createError('Not found.', 404)); return }
+    const argon2 = await import('argon2')
+    const valid = await argon2.verify(user.passwordHash, currentPassword)
+    if (!valid) { next(createError('Current password is incorrect.', 401)); return }
+    const hash = await argon2.hash(newPassword, { type: argon2.argon2id })
+    await prisma.user.update({ where: { id: user.id }, data: { passwordHash: hash } })
+    res.json({ success: true, message: 'Password changed successfully.' })
+  } catch (err) { next(err) }
+}

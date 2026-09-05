@@ -133,7 +133,19 @@ export interface AttendanceStatusResponse {
     istDisplay: string
     date: string
   }
-  geofenceConfig: {
+  // Network config replaces geofenceConfig
+  networkConfig?: {
+    hostelNetwork: string
+    collegeNetwork: string | null
+    message: string
+  }
+  networkVerification?: {
+    location:  'HOSTEL' | 'COLLEGE' | 'OUTSIDE' | 'UNKNOWN'
+    verified:  boolean
+    message:   string
+  }
+  // kept for backwards compatibility
+  geofenceConfig?: {
     hostelCentre: { lat: number; lng: number }
     collegeCentre: { lat: number; lng: number }
     maxGpsAccuracyMeters: number
@@ -152,7 +164,8 @@ export interface AttendanceStatusResponse {
     status: AttendanceStatus
     markedAt: string
     locationType: LocationVerification
-    verifiedLocation?: 'HOSTEL' | 'COLLEGE' | 'OUTSIDE' | null
+    verifiedLocation?: 'HOSTEL' | 'COLLEGE' | 'OUTSIDE' | 'UNKNOWN' | null
+    networkLocation?: string | null
     distanceFromHostel: number | null
     photoUrl?: string | null
   } | null

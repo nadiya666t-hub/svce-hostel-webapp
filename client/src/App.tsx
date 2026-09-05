@@ -42,7 +42,6 @@ import WardenEmergencyContactsPage from '@/pages/warden/WardenEmergencyContactsP
 import WardenProfilePage from '@/pages/warden/WardenProfilePage'
 import WardenNoticesPage from '@/pages/warden/WardenNoticesPage'
 import WardenFeesPage from '@/pages/warden/WardenFeesPage'
-import WardenEntryExitPage from '@/pages/warden/WardenEntryExitPage'
 import WardenWindowsPage from '@/pages/warden/WardenWindowsPage'
 import WardenProtectedRoute from '@/components/auth/WardenProtectedRoute'
 import WardenLayout from '@/layouts/WardenLayout'
@@ -59,9 +58,9 @@ import { OverseerAuthProvider } from '@/hooks/useOverseerAuth'
 // Watchman
 import WatchmanLoginPage from '@/pages/watchman/WatchmanLoginPage'
 import WatchmanDashboardPage from '@/pages/watchman/WatchmanDashboardPage'
-import WatchmanVisitorsPage from '@/pages/watchman/WatchmanVisitorsPage'
 import WatchmanLateEntriesPage from '@/pages/watchman/WatchmanLateEntriesPage'
 import WatchmanInstructionsPage from '@/pages/watchman/WatchmanInstructionsPage'
+import WatchmanProfilePage from '@/pages/watchman/WatchmanProfilePage'
 import WatchmanProtectedRoute from '@/components/auth/WatchmanProtectedRoute'
 import WatchmanLayout from '@/layouts/WatchmanLayout'
 import { WatchmanAuthProvider } from '@/hooks/useWatchmanAuth'
@@ -73,6 +72,7 @@ import AdminAttendancePage from '@/pages/admin/AdminAttendancePage'
 import AdminNoticesPage from '@/pages/admin/AdminNoticesPage'
 import AdminNotificationsPage from '@/pages/admin/AdminNotificationsPage'
 import AdminRoomsPage from '@/pages/admin/AdminRoomsPage'
+import AdminProfilePage from '@/pages/admin/AdminProfilePage'
 import AdminProtectedRoute from '@/components/auth/AdminProtectedRoute'
 import AdminLayout from '@/layouts/AdminLayout'
 import { AdminAuthProvider } from '@/hooks/useAdminAuth'
@@ -135,7 +135,6 @@ function App() {
                 <Route path="profile"            element={<WardenProfilePage />} />
                 <Route path="notices"            element={<WardenNoticesPage />} />
                 <Route path="fees"               element={<WardenFeesPage />} />
-                <Route path="entry-exit"         element={<WardenEntryExitPage />} />
                 <Route path="windows"            element={<WardenWindowsPage />} />
               </Route>
 
@@ -154,9 +153,9 @@ function App() {
               <Route path="/watchman" element={<WatchmanProtectedRoute><WatchmanLayout /></WatchmanProtectedRoute>}>
                 <Route index element={<Navigate to="/watchman/dashboard" replace />} />
                 <Route path="dashboard"    element={<WatchmanDashboardPage />} />
-                <Route path="visitors"     element={<WatchmanVisitorsPage />} />
                 <Route path="late-entries" element={<WatchmanLateEntriesPage />} />
                 <Route path="instructions" element={<WatchmanInstructionsPage />} />
+                <Route path="profile"      element={<WatchmanProfilePage />} />
               </Route>
 
               {/* ── Admin ── */}
@@ -169,6 +168,7 @@ function App() {
                 <Route path="notices"       element={<AdminNoticesPage />} />
                 <Route path="notifications" element={<AdminNotificationsPage />} />
                 <Route path="rooms"         element={<AdminRoomsPage />} />
+                <Route path="profile"       element={<AdminProfilePage />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />

@@ -44,7 +44,7 @@ async function main() {
       data: {
         date: today,
         startTime: '20:30',
-        endTime: '20:40',
+        endTime: '21:00',
         isDefault: true,
         isSpecial: false,
         windowStatus: 'ACTIVE',
