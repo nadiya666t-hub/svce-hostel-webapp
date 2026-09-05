@@ -9,7 +9,7 @@ export const ATTENDANCE_CONFIG = {
 
   // ── Time window ────────────────────────────────────────────────────────────
   attendanceStart: '20:30', // HH:mm IST
-  attendanceEnd:   '20:40', // HH:mm IST
+  attendanceEnd:   '21:00', // HH:mm IST
 
   // ── GPS accuracy ──────────────────────────────────────────────────────────
   maxGpsAccuracyMeters: 50, // reject submissions with accuracy > this value

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Loader2, Clock, CheckCircle2, AlertOctagon, Camera } from 'lucide-react'
+import { ArrowLeft, Loader2, Clock, CheckCircle2, Camera } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import api from '@/services/api'
 import clsx from 'clsx'
@@ -166,7 +166,7 @@ export default function OverseerProblemDetailPage() {
               return (
                 <div key={u.id as string} className="flex gap-3">
                   <div className="flex flex-col items-center">
-                    <span className={clsx('w-2 h-2 rounded-full shrink-0 mt-1', m.dot.replace('bg-','bg-'))} />
+                    <span className={clsx('w-2 h-2 rounded-full shrink-0 mt-1', isDark ? 'bg-slate-600' : 'bg-slate-300')} />
                     {i < updates.length - 1 && <div className={clsx('w-px flex-1 mt-1', isDark ? 'bg-white/8' : 'bg-slate-200')} />}
                   </div>
                   <div className="flex-1 pb-3">

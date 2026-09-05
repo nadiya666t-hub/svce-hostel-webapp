@@ -63,7 +63,7 @@ export default function WardenStudentsPage() {
   const [loading,  setLoading]  = useState(true)
   const [search,   setSearch]   = useState('')
   const [floor,    setFloor]    = useState('')
-  const [room,     setRoom]     = useState('')
+  const [room] = useState('')
   const [status,   setStatus]   = useState('')
   const [page,     setPage]     = useState(1)
   const [expanded, setExpanded] = useState<string|null>(null)

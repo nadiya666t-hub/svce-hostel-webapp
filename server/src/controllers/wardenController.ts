@@ -1056,8 +1056,8 @@ export async function createNotice(
   req: AuthRequest, res: Response, next: NextFunction
 ): Promise<void> {
   try {
-    const { title, description, category, priority } =
-      req.body as { title: string; description: string; category?: string; priority?: string }
+    const { title, description, category, priority, targetStudentId } =
+      req.body as { title: string; description: string; category?: string; priority?: string; targetStudentId?: string }
     if (!title?.trim() || !description?.trim()) {
       next(createError('title and description are required.', 422)); return
     }
@@ -1073,24 +1073,37 @@ export async function createNotice(
       },
     })
 
-    // ── Broadcast notification to ALL active students ──────────────────────
-    const students = await prisma.student.findMany({
-      where: { isActive: true },
-      select: { id: true },
-    })
-    if (students.length > 0) {
-      await prisma.notification.createMany({
-        data: students.map(s => ({
-          studentId: s.id,
+    if (targetStudentId) {
+      // ── Targeted: notify only the specific student ─────────────────────
+      await prisma.notification.create({
+        data: {
+          studentId: targetStudentId,
           type:      'IMPORTANT_NOTICE' as const,
           title:     `Notice: ${title.trim()}`,
           message:   description.trim(),
           isRead:    false,
-        })),
+        },
       })
+    } else {
+      // ── Broadcast notification to ALL active students ──────────────────
+      const students = await prisma.student.findMany({
+        where: { isActive: true },
+        select: { id: true },
+      })
+      if (students.length > 0) {
+        await prisma.notification.createMany({
+          data: students.map(s => ({
+            studentId: s.id,
+            type:      'IMPORTANT_NOTICE' as const,
+            title:     `Notice: ${title.trim()}`,
+            message:   description.trim(),
+            isRead:    false,
+          })),
+        })
+      }
     }
 
-    res.status(201).json({ success: true, data: notice })
+    res.status(201).json({ success: true, data: { ...notice, targetStudentId: targetStudentId ?? null } })
   } catch (err) { next(err) }
 }
 

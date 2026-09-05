@@ -671,12 +671,24 @@ export default function StudentAttendancePage() {
               <WindowCard windowState={status?.windowState} window={status?.window} />
               <LocationCard gps={gps} onRequest={requestLocation} />
 
-              {/* Today's record (if already marked) */}
+              {/* Today's record — show photo + details */}
               {status?.alreadyMarked && status.todayRecord && !submitSuccess && (
                 <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/25 p-4">
                   <p className="text-sm font-bold text-emerald-400 flex items-center gap-2 mb-3">
                     <CheckCircle2 size={15} /> Attendance Marked Today
                   </p>
+                  {/* Show captured photo if available */}
+                  {status.todayRecord.photoUrl && (
+                    <div className="mb-3 rounded-xl overflow-hidden border border-emerald-500/20">
+                      <img
+                        src={status.todayRecord.photoUrl.startsWith('http')
+                          ? status.todayRecord.photoUrl
+                          : `/api${status.todayRecord.photoUrl}`}
+                        alt="Attendance photo"
+                        className="w-full max-h-48 object-cover"
+                      />
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     {[
                       { label: 'Status',   value: STATUS_META[status.todayRecord.status]?.label ?? status.todayRecord.status },

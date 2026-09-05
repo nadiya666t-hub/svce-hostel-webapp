@@ -154,6 +154,7 @@ export interface AttendanceStatusResponse {
     locationType: LocationVerification
     verifiedLocation?: 'HOSTEL' | 'COLLEGE' | 'OUTSIDE' | null
     distanceFromHostel: number | null
+    photoUrl?: string | null
   } | null
 }
 

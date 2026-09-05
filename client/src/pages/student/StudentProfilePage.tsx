@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState, useRef, useCallback } from 'react'
 import {
   User, Building2, BookOpen, Hash, Phone, Mail,
-  Heart, MapPin, Users, GraduationCap, Info, Shield,
+  Heart, MapPin, Users, GraduationCap,
   Camera, RefreshCw, CheckCircle2, Loader2, X, AlertCircle,
 } from 'lucide-react'
 import api from '@/services/api'
@@ -307,7 +307,7 @@ export default function StudentProfilePage() {
       {/* Identity */}
       <Section title="Identity" icon={User}>
         <FieldRow label="Full Name"   value={student?.name}           icon={User}   />
-        <FieldRow label="USN"         value={student?.usn}            icon={Hash}   system />
+        <FieldRow label="USN"         value={student?.usn}            icon={Hash}   />
         <FieldRow label="Email"       value={student?.email}          icon={Mail}   />
         <FieldRow label="Phone"       value={student?.phone}          icon={Phone}  />
         <FieldRow label="Gender"      value={formatGender(student?.gender)} icon={User} />
@@ -316,18 +316,18 @@ export default function StudentProfilePage() {
 
       {/* Academic */}
       <Section title="Academic Details" icon={GraduationCap}>
-        <FieldRow label="Academic Year"  value={student?.academicYear}  icon={BookOpen}     system />
-        <FieldRow label="Year"           value={student?.year}          icon={BookOpen}     system />
-        <FieldRow label="Semester"       value={student?.semester}      icon={BookOpen}     system />
-        <FieldRow label="Course"         value={student?.course}        icon={GraduationCap} system />
-        <FieldRow label="Branch"         value={student?.branch}        icon={GraduationCap} system />
-        <FieldRow label="Admission Year" value={student?.admissionYear} icon={BookOpen}     system />
+        <FieldRow label="Academic Year"  value={student?.academicYear}  icon={BookOpen}      />
+        <FieldRow label="Year"           value={student?.year}          icon={BookOpen}      />
+        <FieldRow label="Semester"       value={student?.semester}      icon={BookOpen}      />
+        <FieldRow label="Course"         value={student?.course}        icon={GraduationCap} />
+        <FieldRow label="Branch"         value={student?.branch}        icon={GraduationCap} />
+        <FieldRow label="Admission Year" value={student?.admissionYear} icon={BookOpen}      />
       </Section>
 
       {/* Hostel */}
       <Section title="Hostel Accommodation" icon={Building2}>
-        <FieldRow label="Floor" value={student?.floorNumber} icon={Building2} system />
-        <FieldRow label="Room"  value={student?.roomNumber}  icon={Building2} system />
+        <FieldRow label="Floor" value={student?.floorNumber} icon={Building2} />
+        <FieldRow label="Room"  value={student?.roomNumber}  icon={Building2} />
       </Section>
 
       {(student?.parentName || student?.parentPhone || student?.parentEmail) && (
@@ -345,24 +345,6 @@ export default function StudentProfilePage() {
           <FieldRow label="State"    value={student?.state}    icon={MapPin} />
           <FieldRow label="Pin Code" value={student?.pinCode}  icon={MapPin} />
         </Section>
-      )}
-
-      <div className="bg-slate-50 rounded-2xl border border-slate-200 px-5 py-4">
-        <div className="flex items-start gap-3">
-          <Shield size={14} className="dark:text-zinc-500 text-zinc-400 mt-0.5 shrink-0" />
-          <div className="space-y-1">
-            <p className="text-xs font-semibold dark:text-zinc-400 text-zinc-500">System-managed fields</p>
-            <p className="text-xs dark:text-zinc-500 text-zinc-400 leading-relaxed">
-              USN, Floor, Room, Academic Year, Course, Branch and Admission Year are controlled by the hostel administration and cannot be changed here.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {student?.importSource && (
-        <div className="flex items-center gap-2 text-[11px] text-slate-300 justify-center pb-2">
-          <Info size={11} /> Record source: {student.importSource}
-        </div>
       )}
     </div>
   )

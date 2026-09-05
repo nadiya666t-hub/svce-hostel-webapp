@@ -109,6 +109,7 @@ export async function getAttendanceStatus(
               locationType: existingAttendance.locationType,
               distanceFromHostel: existingAttendance.distanceFromHostel,
               verifiedLocation: existingAttendance.verifiedLocation ?? null,
+              photoUrl: existingAttendance.photoUrl ?? null,
             }
           : null,
       },

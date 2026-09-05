@@ -86,7 +86,7 @@ router.get('/fees',                       getFeeOverview)
 
 // Emergency contacts
 router.get('/emergency-contacts',         getEmergencyContacts)
-router.post('/emergency-contacts',        (req, res, next) => { req.params.id = ''; upsertEmergencyContact(req, res, next) })
+router.post('/emergency-contacts',        (req, res, next) => { (req.params as Record<string,string>).id = ''; upsertEmergencyContact(req, res, next) })
 router.put('/emergency-contacts/:id',     upsertEmergencyContact)
 router.delete('/emergency-contacts/:id',  deleteEmergencyContact)
 

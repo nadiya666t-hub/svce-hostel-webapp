@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Bell, Plus, Loader2, X, Pencil, Trash2 } from 'lucide-react'
+import { Bell, Plus, Loader2, X, Pencil, Trash2, Users, User } from 'lucide-react'
 import { wardenService } from '@/services/wardenService'
 import { useTheme } from '@/hooks/useTheme'
 import clsx from 'clsx'
@@ -12,45 +12,72 @@ const PRIORITY_META: Record<string,{label:string;color:string}> = {
 }
 function fmt(iso:string){ return new Date(iso).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) }
 
+interface Student { id: string; name: string; usn: string }
+
 export default function WardenNoticesPage() {
   const { isDark } = useTheme()
-  const [notices, setNotices] = useState<Record<string,unknown>[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showForm,setShowForm]= useState(false)
-  const [editId,  setEditId]  = useState<string|null>(null)
-  const [title,   setTitle]   = useState('')
-  const [desc,    setDesc]    = useState('')
-  const [cat,     setCat]     = useState('General')
-  const [prio,    setPrio]    = useState('MEDIUM')
-  const [saving,  setSaving]  = useState(false)
-  const [error,   setError]   = useState('')
+  const [notices,   setNotices]   = useState<Record<string,unknown>[]>([])
+  const [students,  setStudents]  = useState<Student[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [showForm,  setShowForm]  = useState(false)
+  const [editId,    setEditId]    = useState<string|null>(null)
+  const [title,     setTitle]     = useState('')
+  const [desc,      setDesc]      = useState('')
+  const [cat,       setCat]       = useState('General')
+  const [prio,      setPrio]      = useState('MEDIUM')
+  const [target,    setTarget]    = useState<'all'|'student'>('all')
+  const [studentId, setStudentId] = useState('')
+  const [saving,    setSaving]    = useState(false)
+  const [error,     setError]     = useState('')
 
-  const load = useCallback(async()=>{
+  const loadNotices = useCallback(async()=>{
     setLoading(true)
     try{ const r=await wardenService.getNotices(); if(r.success) setNotices(r.data) }
     finally{ setLoading(false) }
   },[])
 
-  useEffect(()=>{ load() },[load])
+  useEffect(()=>{
+    loadNotices()
+    wardenService.getStudents({ page:1, limit:200 }).then((r: { success: boolean; data?: { students?: Student[] } }) => {
+      if(r.success) setStudents((r.data?.students ?? []) as Student[])
+    }).catch(()=>{})
+  },[loadNotices])
 
-  function openCreate(){ setEditId(null); setTitle(''); setDesc(''); setCat('General'); setPrio('MEDIUM'); setError(''); setShowForm(true) }
-  function openEdit(n:Record<string,unknown>){ setEditId(n.id as string); setTitle(n.title as string); setDesc(n.description as string); setCat(n.category as string); setPrio(n.priority as string); setError(''); setShowForm(true) }
+  function openCreate(){
+    setEditId(null); setTitle(''); setDesc(''); setCat('General'); setPrio('MEDIUM')
+    setTarget('all'); setStudentId(''); setError(''); setShowForm(true)
+  }
+  function openEdit(n:Record<string,unknown>){
+    setEditId(n.id as string); setTitle(n.title as string); setDesc(n.description as string)
+    setCat(n.category as string); setPrio(n.priority as string)
+    setTarget('all'); setStudentId(''); setError(''); setShowForm(true)
+  }
   function closeForm(){ setShowForm(false); setEditId(null); setTitle(''); setDesc(''); setError('') }
 
   async function handleSave(e:React.FormEvent){
     e.preventDefault(); setError('')
     if(!title.trim()||!desc.trim()){ setError('Title and description required.'); return }
+    if(target==='student'&&!studentId){ setError('Please select a student.'); return }
     setSaving(true)
     try {
-      const data={title:title.trim(),description:desc.trim(),category:cat,priority:prio}
-      const r = editId ? await wardenService.updateNotice(editId,data) : await wardenService.createNotice(data)
-      if(r.success){ closeForm(); load() } else setError(r.message??'Failed.')
+      const data: Record<string,unknown> = {
+        title: title.trim(),
+        description: desc.trim(),
+        category: cat,
+        priority: prio,
+        ...(target==='student' && !editId ? { targetStudentId: studentId } : {}),
+      }
+      const r = editId
+        ? await wardenService.updateNotice(editId, data)
+        : await wardenService.createNotice(data)
+      if(r.success){ closeForm(); loadNotices() } else setError(r.message??'Failed.')
     } catch(e2:unknown){ setError((e2 as {response?:{data?:{message?:string}}})?.response?.data?.message??'Failed.') }
     finally{ setSaving(false) }
   }
 
   return (
     <div className="max-w-3xl mx-auto animate-fade-in">
+      {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center',isDark?'bg-amber-500/15 border border-amber-500/20':'bg-amber-50 border border-amber-200')}>
@@ -64,6 +91,7 @@ export default function WardenNoticesPage() {
         {!showForm && <button onClick={openCreate} className="btn-accent text-sm px-4 py-2 flex items-center gap-1.5"><Plus size={15}/> New Notice</button>}
       </div>
 
+      {/* Form */}
       {showForm && (
         <div className={clsx('rounded-2xl border p-5 mb-5 animate-slide-down',isDark?'bg-dark-900 border-white/8':'bg-white border-slate-200 shadow-sm')}>
           <div className="flex items-center justify-between mb-4">
@@ -95,6 +123,43 @@ export default function WardenNoticesPage() {
                 </select>
               </div>
             </div>
+
+            {/* Target — only for new notices */}
+            {!editId && (
+              <div>
+                <label className="field-label">Send To</label>
+                <div className="flex gap-2 mb-2">
+                  <button type="button" onClick={()=>setTarget('all')}
+                    className={clsx('flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all',
+                      target==='all'
+                        ? isDark?'bg-accent-600/20 border-accent-500/40 text-accent-300':'bg-accent-50 border-accent-300 text-accent-700'
+                        : isDark?'border-white/8 text-slate-400 hover:border-white/15':'border-slate-200 text-slate-500 hover:border-slate-300')}>
+                    <Users size={13}/> All Students
+                  </button>
+                  <button type="button" onClick={()=>setTarget('student')}
+                    className={clsx('flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all',
+                      target==='student'
+                        ? isDark?'bg-amber-500/20 border-amber-500/40 text-amber-300':'bg-amber-50 border-amber-300 text-amber-700'
+                        : isDark?'border-white/8 text-slate-400 hover:border-white/15':'border-slate-200 text-slate-500 hover:border-slate-300')}>
+                    <User size={13}/> Specific Student
+                  </button>
+                </div>
+                {target==='student' && (
+                  <select value={studentId} onChange={e=>setStudentId(e.target.value)} className="input-dark w-full">
+                    <option value="">— Select student —</option>
+                    {students.map(s=>(
+                      <option key={s.id} value={s.id}>{s.name} ({s.usn})</option>
+                    ))}
+                  </select>
+                )}
+                {target==='all' && (
+                  <p className={clsx('text-xs mt-1',isDark?'text-slate-500':'text-slate-400')}>
+                    This notice will be sent to all {students.length} active students.
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button type="submit" disabled={saving} className="btn-accent text-sm px-5 py-2.5 flex items-center gap-2 disabled:opacity-50">
                 {saving?<Loader2 size={14} className="animate-spin"/>:<Bell size={14}/>} {editId?'Update':'Publish'}
@@ -105,6 +170,7 @@ export default function WardenNoticesPage() {
         </div>
       )}
 
+      {/* List */}
       {loading ? <div className="flex justify-center py-10"><Loader2 size={28} className="animate-spin text-amber-400"/></div>
         : notices.length===0 ? (
           <div className={clsx('rounded-2xl border p-12 text-center',isDark?'bg-dark-900 border-white/8':'bg-white border-slate-200')}>
@@ -130,7 +196,7 @@ export default function WardenNoticesPage() {
                     </div>
                     <div className="flex gap-1 shrink-0">
                       <button onClick={()=>openEdit(notice)} className={clsx('p-2 rounded-xl',isDark?'text-slate-600 hover:text-accent-400 hover:bg-accent-600/10':'text-slate-400 hover:text-accent-600 hover:bg-accent-50')}><Pencil size={14}/></button>
-                      <button onClick={async()=>{ if(confirm('Delete notice?')){ await wardenService.deleteNotice(notice.id as string); load() } }}
+                      <button onClick={async()=>{ if(confirm('Delete notice?')){ await wardenService.deleteNotice(notice.id as string); loadNotices() } }}
                         className={clsx('p-2 rounded-xl',isDark?'text-slate-600 hover:text-red-400 hover:bg-red-500/10':'text-slate-400 hover:text-red-500 hover:bg-red-50')}><Trash2 size={14}/></button>
                     </div>
                   </div>

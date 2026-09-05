@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { User, Loader2, ShieldCheck, KeyRound, CheckCircle2, AlertCircle } from 'lucide-react'
+import { User, Loader2, ShieldCheck, KeyRound, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { wardenService } from '@/services/wardenService'
 import { useWardenAuth } from '@/hooks/useWardenAuth'
 import { useTheme } from '@/hooks/useTheme'
@@ -11,6 +11,9 @@ export default function WardenProfilePage() {
   const [profile,   setProfile]   = useState<Record<string,unknown>|null>(null)
   const [loading,   setLoading]   = useState(true)
   const [showPw,    setShowPw]    = useState(false)
+  const [showCurPw, setShowCurPw] = useState(false)
+  const [showNewPw, setShowNewPw] = useState(false)
+  const [showConfPw,setShowConfPw]= useState(false)
   const [curPw,     setCurPw]     = useState('')
   const [newPw,     setNewPw]     = useState('')
   const [confPw,    setConfPw]    = useState('')
@@ -101,10 +104,20 @@ export default function WardenProfilePage() {
                 {pwMsg.type==='success'?<CheckCircle2 size={14}/>:<AlertCircle size={14}/>} {pwMsg.text}
               </div>
             )}
-            {([['Current Password',curPw,setCurPw],['New Password',newPw,setNewPw],['Confirm New Password',confPw,setConfPw]] as [string,string,(v:string)=>void][]).map(([l,v,fn])=>(
+            {([
+              ['Current Password', curPw, setCurPw, showCurPw, setShowCurPw],
+              ['New Password',     newPw, setNewPw, showNewPw, setShowNewPw],
+              ['Confirm New Password', confPw, setConfPw, showConfPw, setShowConfPw],
+            ] as [string, string, (v:string)=>void, boolean, (v:boolean)=>void][]).map(([l,v,fn,show,setShow])=>(
               <div key={l}>
                 <label className="field-label">{l}</label>
-                <input type="password" value={v} onChange={e=>fn(e.target.value)} placeholder={l} className="input-dark w-full"/>
+                <div className="relative">
+                  <input type={show ? 'text' : 'password'} value={v} onChange={e=>fn(e.target.value)} placeholder={l} className="input-dark w-full pr-10"/>
+                  <button type="button" onClick={()=>setShow(!show)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                    {show ? <EyeOff size={15}/> : <Eye size={15}/>}
+                  </button>
+                </div>
               </div>
             ))}
             <button type="submit" disabled={pwSaving} className="btn-accent text-sm px-4 py-2 flex items-center gap-2 disabled:opacity-50">

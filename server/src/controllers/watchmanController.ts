@@ -298,3 +298,58 @@ export async function getWatchmanProfile(req: AuthRequest, res: Response, next: 
     })
   } catch (err) { next(err) }
 }
+
+// ── GET /api/watchman/instructions ──────────────────────────────────────────
+// Returns special attendance windows (Warden-issued) for watchman awareness
+export async function getInstructions(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await resolveWatchman(req.user!.userId)
+
+    const windows = await prisma.attendanceWindow.findMany({
+      where: {
+        isSpecial:    true,
+        studentId:    { not: null },
+        windowStatus: 'ACTIVE',
+      },
+      orderBy: { date: 'desc' },
+      take: 50,
+      include: {
+        student: {
+          include: {
+            user: { select: { usn: true } },
+            room: { include: { floor: true } },
+            allocations: {
+              where: { status: 'ACTIVE' },
+              take: 1,
+              orderBy: { allocatedAt: 'desc' },
+              include: { room: { include: { floor: true } } },
+            },
+          },
+        },
+      },
+    })
+
+    const data = windows
+      .filter(w => w.student !== null)
+      .map(w => {
+        const s    = w.student!
+        const room = s.allocations[0]?.room ?? s.room
+        return {
+          id:          w.id,
+          studentId:   s.id,
+          studentName: s.name,
+          usn:         s.user.usn,
+          floor:       room?.floor?.floorNumber ?? '—',
+          room:        room?.roomNumber ?? '—',
+          date:        w.date.toISOString().slice(0, 10),
+          startTime:   w.startTime,
+          endTime:     w.endTime,
+          reason:      w.reason ?? null,
+          isUsed:      false,
+          createdAt:   w.createdAt,
+        }
+      })
+
+    res.json({ success: true, data })
+  } catch (err) { next(err) }
+}

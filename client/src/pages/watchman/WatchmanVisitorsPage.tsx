@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Users, Plus, X, Loader2, CheckCircle2, XCircle, Clock, LogOut as ExitIcon } from 'lucide-react'
+import { Users, Plus, X, Loader2, CheckCircle2, XCircle, LogOut as ExitIcon } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import api from '@/services/api'
 import clsx from 'clsx'
@@ -125,7 +125,7 @@ export default function WatchmanVisitorsPage() {
                     <p className={clsx('text-sm font-bold', isDark ? 'text-slate-200' : 'text-slate-800')}>{e.visitorName as string}</p>
                     <p className={clsx('text-xs mt-0.5', isDark ? 'text-slate-500' : 'text-slate-400')}>{e.relationship as string} · {e.phone as string}</p>
                     <p className={clsx('text-xs', isDark ? 'text-slate-500' : 'text-slate-400')}>Visiting: <span className="font-semibold">{e.studentName as string}</span> ({e.studentUsn as string}) — Room {e.roomNumber as string}</p>
-                    {e.purpose && <p className={clsx('text-xs', isDark ? 'text-slate-600' : 'text-slate-400')}>Purpose: {e.purpose as string}</p>}
+                    {!!e.purpose && <p className={clsx('text-xs', isDark ? 'text-slate-600' : 'text-slate-400')}>Purpose: {String(e.purpose)}</p>}
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
                     <span className={clsx('text-xs font-semibold px-2.5 py-1 rounded-full border', pm.bg, pm.color)}>{pm.label}</span>

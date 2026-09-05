@@ -8,7 +8,6 @@ const STATUS_META: Record<string,{label:string;color:string;dot:string}> = {
   PRESENT:       {label:'Present',       color:'text-emerald-500',dot:'bg-emerald-500'},
   LATE_PRESENT:  {label:'Late Present',  color:'text-amber-400',  dot:'bg-amber-400'},
   ABSENT:        {label:'Absent',        color:'text-red-500',    dot:'bg-red-500'},
-  EXCUSED:       {label:'Excused',       color:'text-blue-400',   dot:'bg-blue-400'},
   NOT_SUBMITTED: {label:'Not Submitted', color:'text-slate-400',  dot:'bg-slate-400'},
 }
 

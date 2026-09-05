@@ -6,7 +6,7 @@ import { watchmanLogin } from '../controllers/watchmanAuthController'
 import {
   getDashboardStats, getVisitors, recordVisitor, markVisitorExit,
   updatePermission, getLateEntries, recordLateEntry,
-  updateLateEntryPermission, getWatchmanProfile,
+  updateLateEntryPermission, getWatchmanProfile, getInstructions,
 } from '../controllers/watchmanController'
 
 const router = Router()
@@ -27,5 +27,6 @@ router.patch('/visitors/:id/permission',         updatePermission)
 router.get('/late-entries',                      getLateEntries)
 router.post('/late-entries',                     recordLateEntry)
 router.patch('/late-entries/:id/permission',     updateLateEntryPermission)
+router.get('/instructions',                      getInstructions)
 
 export default router

@@ -34,16 +34,40 @@ export async function getDashboardStats(req: AuthRequest, res: Response, next: N
         problem: {
           include: {
             student: {
-              include: { room: { include: { floor: true } } },
+              include: {
+                room: { include: { floor: true } },
+                allocations: {
+                  where: { status: 'ACTIVE' },
+                  include: { room: { include: { floor: true } } },
+                  take: 1,
+                  orderBy: { allocatedAt: 'desc' },
+                },
+              },
             },
           },
         },
       },
     })
 
+    const now2 = new Date()
+    const recentFormatted = recent.map(p => {
+      const student = p.problem.student
+      const room = student.allocations[0]?.room ?? student.room
+      return {
+        id:          p.id,
+        status:      p.status,
+        category:    p.problem.category,
+        studentName: student.name,
+        roomNumber:  room?.roomNumber ?? p.problem.roomNumber ?? '—',
+        floor:       room?.floor?.floorNumber ?? '—',
+        createdAt:   p.createdAt,
+        isOverdue:   p.deadlineAt < now2 && !['RESOLVED','REJECTED','ESCALATED'].includes(p.status),
+      }
+    })
+
     res.json({
       success: true,
-      data: { total, new: newProbs, inProgress, resolved, escalated, overdue, recent },
+      data: { total, new: newProbs, inProgress, resolved, escalated, overdue, recent: recentFormatted },
     })
   } catch (err) { next(err) }
 }

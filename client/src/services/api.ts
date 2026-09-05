@@ -14,6 +14,7 @@ function getTokenForUrl(url: string): string | null {
   if (url.includes('/watchman')) return localStorage.getItem('hms_watchman_token')
   if (url.includes('/warden'))   return localStorage.getItem('hms_warden_token')
   if (url.includes('/parent'))   return localStorage.getItem('hms_parent_token')
+  if (url.includes('/admin'))    return localStorage.getItem('hms_admin_token')
   return localStorage.getItem('hms_token') // student
 }
 
@@ -23,6 +24,7 @@ function getLoginRedirectForUrl(url: string): string {
   if (url.includes('/watchman')) return '/watchman/login'
   if (url.includes('/warden'))   return '/warden/login'
   if (url.includes('/parent'))   return '/parent/login'
+  if (url.includes('/admin'))    return '/admin/login'
   return '/student/login'
 }
 
@@ -44,7 +46,10 @@ api.interceptors.response.use(
       const url = error.config?.url ?? ''
       const redirect = getLoginRedirectForUrl(url)
       // Clear only the relevant token
-      if (url.includes('/overseer')) {
+      if (url.includes('/admin')) {
+        localStorage.removeItem('hms_admin_token')
+        localStorage.removeItem('hms_admin_user')
+      } else if (url.includes('/overseer')) {
         localStorage.removeItem('hms_overseer_token')
         localStorage.removeItem('hms_overseer_user')
       } else if (url.includes('/watchman')) {

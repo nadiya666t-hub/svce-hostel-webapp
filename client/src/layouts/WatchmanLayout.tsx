@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Clock, User, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Users, Clock, User, LogOut, Menu, X, ClipboardList } from 'lucide-react'
 import { useWatchmanAuth } from '@/hooks/useWatchmanAuth'
 import { useTheme } from '@/hooks/useTheme'
 import ThemeToggle from '@/components/ui/ThemeToggle'
@@ -10,6 +10,7 @@ const NAV = [
   { to: '/watchman/dashboard',    label: 'Dashboard',    icon: LayoutDashboard },
   { to: '/watchman/visitors',     label: 'Visitors',     icon: Users },
   { to: '/watchman/late-entries', label: 'Late Entries',  icon: Clock },
+  { to: '/watchman/instructions', label: 'Instructions', icon: ClipboardList },
   { to: '/watchman/profile',      label: 'Profile',      icon: User },
 ]
 
@@ -83,3 +84,4 @@ export default function WatchmanLayout() {
     </div>
   )
 }
+

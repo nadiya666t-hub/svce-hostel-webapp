@@ -78,8 +78,9 @@ const portals: Portal[] = [
     subtitle: 'System control',
     description: 'Full system administration, users and settings.',
     icon: Settings,
-    active: false,
+    active: true,
     accentColor: '#06b6d4',
+    path: '/admin/login',
   },
 ]
 

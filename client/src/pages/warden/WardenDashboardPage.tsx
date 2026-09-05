@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Users, Building2, CheckCircle2, XCircle, ClipboardList, AlertTriangle, Loader2, TrendingUp, CalendarCheck } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from 'recharts'
+import { Link } from 'react-router-dom'
 import { wardenService } from '@/services/wardenService'
 import { useWardenAuth } from '@/hooks/useWardenAuth'
 import { useTheme } from '@/hooks/useTheme'
@@ -13,13 +14,14 @@ interface Stats {
   attendanceDate: string; trend: Trend[]
 }
 
-function StatCard({ label, value, icon: Icon, accent, sub }: {
-  label: string; value: number | string; icon: React.ElementType; accent: string; sub?: string
+function StatCard({ label, value, icon: Icon, accent, sub, to }: {
+  label: string; value: number | string; icon: React.ElementType; accent: string; sub?: string; to?: string
 }) {
   const { isDark } = useTheme()
-  return (
+  const inner = (
     <div className={clsx('relative rounded-2xl border p-5 overflow-hidden transition-all hover:-translate-y-0.5',
-      isDark ? 'bg-dark-900 border-white/8' : 'bg-white border-slate-200 shadow-sm')}>
+      isDark ? 'bg-dark-900 border-white/8' : 'bg-white border-slate-200 shadow-sm',
+      to ? 'cursor-pointer hover:shadow-md' : '')}>
       <div className="absolute inset-x-0 top-0 h-0.5" style={{ background: accent }} />
       <div className="flex items-start justify-between mb-3">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -32,6 +34,7 @@ function StatCard({ label, value, icon: Icon, accent, sub }: {
       {sub && <p className={clsx('text-xs mt-0.5', isDark ? 'text-slate-500' : 'text-slate-400')}>{sub}</p>}
     </div>
   )
+  return to ? <Link to={to}>{inner}</Link> : inner
 }
 
 export default function WardenDashboardPage() {
@@ -64,14 +67,14 @@ export default function WardenDashboardPage() {
   ] : []
 
   const cards = stats ? [
-    { label: 'Total Students',   value: stats.totalStudents,   icon: Users,          accent: '#3b6ef4' },
-    { label: 'Total Rooms',      value: stats.totalRooms,      icon: Building2,      accent: '#6366f1' },
-    { label: 'Occupied Rooms',   value: stats.occupiedRooms,   icon: Building2,      accent: '#8b5cf6' },
-    { label: 'Vacant Rooms',     value: stats.vacantRooms,     icon: Building2,      accent: '#10b981' },
-    { label: 'Pending Requests', value: stats.pendingRequests, icon: ClipboardList,  accent: '#f59e0b' },
-    { label: 'Pending Problems', value: stats.pendingProblems, icon: AlertTriangle,  accent: '#f97316' },
-    { label: 'Present Today',    value: stats.presentToday,    icon: CheckCircle2,   accent: '#10b981', sub: `${attPct}% attendance` },
-    { label: 'Absent Today',     value: stats.absentToday,     icon: XCircle,        accent: '#ef4444' },
+    { label: 'Total Students',   value: stats.totalStudents,   icon: Users,          accent: '#3b6ef4', to: '/warden/students' },
+    { label: 'Total Rooms',      value: stats.totalRooms,      icon: Building2,      accent: '#6366f1', to: '/warden/rooms' },
+    { label: 'Occupied Rooms',   value: stats.occupiedRooms,   icon: Building2,      accent: '#8b5cf6', to: '/warden/rooms' },
+    { label: 'Vacant Rooms',     value: stats.vacantRooms,     icon: Building2,      accent: '#10b981', to: '/warden/rooms' },
+    { label: 'Pending Requests', value: stats.pendingRequests, icon: ClipboardList,  accent: '#f59e0b', to: '/warden/requests' },
+    { label: 'Pending Problems', value: stats.pendingProblems, icon: AlertTriangle,  accent: '#f97316', to: '/warden/problems' },
+    { label: 'Present Today',    value: stats.presentToday,    icon: CheckCircle2,   accent: '#10b981', to: '/warden/attendance', sub: `${attPct}% attendance` },
+    { label: 'Absent Today',     value: stats.absentToday,     icon: XCircle,        accent: '#ef4444', to: '/warden/attendance' },
   ] : []
 
   return (

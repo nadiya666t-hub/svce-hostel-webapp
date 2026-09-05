@@ -28,16 +28,13 @@ interface RequestOption {
 
 const REQUEST_OPTIONS: RequestOption[] = [
   // Emergency group
-  { value: 'EMERGENCY',      label: 'Emergency',          description: 'Medical or urgent personal emergency requiring immediate attention', group: 'EMERGENCY' },
+  { value: 'EMERGENCY', label: 'Emergency', description: 'Medical or urgent personal emergency requiring immediate attention', group: 'EMERGENCY' },
   // Important group
-  { value: 'IMPORTANT',      label: 'Important',          description: 'Important personal matter or permission request', group: 'IMPORTANT' },
-  { value: 'EMERGENCY_LEAVE',label: 'Emergency Leave',    description: 'Urgent leave for important family or personal matter', group: 'IMPORTANT' },
-  // Moderate group
-  { value: 'MODERATE',       label: 'Moderate',           description: 'Routine hostel-related request', group: 'MODERATE' },
-  { value: 'GOING_HOME',     label: 'Going Home',         description: 'Weekend or holiday visit home', group: 'MODERATE' },
-  { value: 'OUTING',         label: 'Outing',             description: 'Short outing — shopping, errands, etc.', group: 'MODERATE' },
-  { value: 'LEAVE',          label: 'Leave',              description: 'Planned leave from hostel', group: 'MODERATE' },
-  { value: 'OTHER',          label: 'Other',              description: 'Other moderate request not listed above', group: 'MODERATE' },
+  { value: 'IMPORTANT', label: 'Important', description: 'Important personal matter or permission request', group: 'IMPORTANT' },
+  // Moderate group — only going home, outing, other (no planned leave / routine hostel)
+  { value: 'GOING_HOME', label: 'Going Home', description: 'Weekend or holiday visit home', group: 'MODERATE' },
+  { value: 'OUTING',     label: 'Outing',     description: 'Short outing — shopping, errands, etc.', group: 'MODERATE' },
+  { value: 'OTHER',      label: 'Other',      description: 'Other moderate request not listed above', group: 'MODERATE' },
 ]
 
 const GROUP_META: Record<RequestGroup, { label: string; icon: React.ElementType; accent: string; desc: string }> = {

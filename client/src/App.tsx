@@ -61,9 +61,21 @@ import WatchmanLoginPage from '@/pages/watchman/WatchmanLoginPage'
 import WatchmanDashboardPage from '@/pages/watchman/WatchmanDashboardPage'
 import WatchmanVisitorsPage from '@/pages/watchman/WatchmanVisitorsPage'
 import WatchmanLateEntriesPage from '@/pages/watchman/WatchmanLateEntriesPage'
+import WatchmanInstructionsPage from '@/pages/watchman/WatchmanInstructionsPage'
 import WatchmanProtectedRoute from '@/components/auth/WatchmanProtectedRoute'
 import WatchmanLayout from '@/layouts/WatchmanLayout'
 import { WatchmanAuthProvider } from '@/hooks/useWatchmanAuth'
+// Admin
+import AdminLoginPage from '@/pages/admin/AdminLoginPage'
+import AdminDashboardPage from '@/pages/admin/AdminDashboardPage'
+import AdminStudentsPage from '@/pages/admin/AdminStudentsPage'
+import AdminAttendancePage from '@/pages/admin/AdminAttendancePage'
+import AdminNoticesPage from '@/pages/admin/AdminNoticesPage'
+import AdminNotificationsPage from '@/pages/admin/AdminNotificationsPage'
+import AdminRoomsPage from '@/pages/admin/AdminRoomsPage'
+import AdminProtectedRoute from '@/components/auth/AdminProtectedRoute'
+import AdminLayout from '@/layouts/AdminLayout'
+import { AdminAuthProvider } from '@/hooks/useAdminAuth'
 
 function App() {
   return (
@@ -74,6 +86,7 @@ function App() {
             <WardenAuthProvider>
             <OverseerAuthProvider>
             <WatchmanAuthProvider>
+            <AdminAuthProvider>
             <Routes>
               <Route path="/" element={<HomePage />} />
 
@@ -143,10 +156,24 @@ function App() {
                 <Route path="dashboard"    element={<WatchmanDashboardPage />} />
                 <Route path="visitors"     element={<WatchmanVisitorsPage />} />
                 <Route path="late-entries" element={<WatchmanLateEntriesPage />} />
+                <Route path="instructions" element={<WatchmanInstructionsPage />} />
+              </Route>
+
+              {/* ── Admin ── */}
+              <Route path="/admin/login" element={<AdminLoginPage />} />
+              <Route path="/admin" element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
+                <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="dashboard"     element={<AdminDashboardPage />} />
+                <Route path="students"      element={<AdminStudentsPage />} />
+                <Route path="attendance"    element={<AdminAttendancePage />} />
+                <Route path="notices"       element={<AdminNoticesPage />} />
+                <Route path="notifications" element={<AdminNotificationsPage />} />
+                <Route path="rooms"         element={<AdminRoomsPage />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+          </AdminAuthProvider>
           </WatchmanAuthProvider>
           </OverseerAuthProvider>
           </WardenAuthProvider>
